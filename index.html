@@ -1,0 +1,3224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GD Utility</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #10151c;
+    --panel: #1a2230;
+    --border: #2a3444;
+    --text: #E7ECF3;
+    --muted: #8B96A8;
+    --accent: #4FD1C5;
+    --bg-image: none;
+    --panel-image: none;
+    --accent-image: none;
+  }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--bg);
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    background-attachment: scroll;
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .hidden { display: none !important; }
+
+  /* ---------- Tela de login/cadastro ---------- */
+  #authScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .auth-card {
+    background-color: var(--panel);
+    background-image: var(--panel-image);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .auth-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .auth-subtitle {
+    font-size: 13px;
+    color: #8B96A8;
+    margin: 0 0 24px;
+  }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: #8B96A8;
+    margin-bottom: 6px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .field input:hover, .field select:hover, .field textarea:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .field textarea { resize: vertical; font-family: inherit; }
+  .field input[type=color] { padding: 4px; height: 42px; cursor: pointer; }
+  .field input[type=file] { padding: 8px; cursor: pointer; }
+  .rules-box {
+    background: #10151c;
+    border: 1px solid #2a3444;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+  }
+  .rule-line { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: #8B96A8; }
+  .rule-line .mark { width: 14px; text-align: center; font-weight: 700; color: #4a5568; }
+  .rule-line.ok { color: #4ADE80; }
+  .rule-line.ok .mark { color: #4ADE80; }
+  .btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background-color: var(--accent);
+    background-image: var(--accent-image);
+    background-size: cover;
+    background-position: center;
+    color: #05231f;
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-primary:disabled { background: var(--border); color: #6b7688; cursor: not-allowed; }
+  .switch-link {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .switch-link a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .auth-msg {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+  .auth-msg.error { background: #3a1a1a; color: #F87171; border: 1px solid #5c2b2b; }
+  .auth-msg.success { background: #14301f; color: #4ADE80; border: 1px solid #1f4a30; }
+
+  /* ---------- Painel principal ---------- */
+  #dashboard { display: flex; min-height: 100vh; }
+  #sidebar {
+    width: 240px;
+    background-color: var(--panel);
+    background-image: var(--panel-image);
+    background-size: cover;
+    background-position: center;
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.2s ease;
+    overflow: hidden;
+  }
+  #sidebar.collapsed { width: 64px; padding: 24px 10px; }
+  .sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-size: 16px;
+  }
+  .sidebar-toggle:hover { background: #1e2733; color: var(--text); }
+  .side-header { padding: 0 8px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; white-space: nowrap; overflow: hidden; }
+  .side-header .user-name { font-size: 14px; font-weight: 600; }
+  .side-header .user-tag { font-size: 12px; color: var(--muted); }
+  #sidebar.collapsed .side-header { display: none; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    white-space: nowrap;
+  }
+  .nav-item:hover { background: #1e2733; color: var(--text); }
+  .nav-item.active { background: #1e2733; color: var(--accent); font-weight: 600; }
+  .nav-icon { font-size: 16px; width: 18px; text-align: center; flex-shrink: 0; }
+  #sidebar.collapsed .nav-label { display: none; }
+  .logout-btn {
+    margin-top: auto;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #F87171;
+    cursor: pointer;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  }
+  #sidebar.collapsed .logout-label { display: none; }
+  #content { flex: 1; padding: 32px 40px; display: flex; justify-content: center; }
+  .panel { display: none; width: 100%; max-width: 900px; }
+  .panel.active { display: block; }
+  .panel h1 { font-size: 22px; margin: 0 0 4px; }
+  .panel .sub { color: var(--muted); font-size: 13px; margin: 0 0 28px; }
+
+  /* cards genéricos */
+  .card {
+    background-color: var(--panel);
+    background-image: var(--panel-image);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h3 { margin: 0 0 16px; font-size: 15px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  .result-box {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  .result-stat { min-width: 140px; }
+  .result-stat .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .result-stat .value { font-size: 20px; font-weight: 600; }
+  .result-stat.teal .value { color: var(--accent); }
+  .result-stat.coral .value { color: #F0997B; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .table-scroll { max-height: 360px; overflow-y: auto; border-radius: 8px; }
+  .table-scroll table { margin-top: 0; }
+  .table-scroll thead th { position: sticky; top: 0; background: var(--panel); }
+
+  .checkbox-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .check-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border: 1px solid var(--border); border-radius: 999px;
+    font-size: 13px; cursor: pointer; background: var(--bg);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .check-pill:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .check-pill input[type=checkbox] {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    width: 15px; height: 15px; flex-shrink: 0;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); cursor: pointer; position: relative; margin: 0;
+  }
+  .check-pill input[type=checkbox]:checked {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .check-pill input[type=checkbox]:checked::after {
+    content: '✓'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); font-size: 10px; color: #05231f; line-height: 1;
+  }
+  .check-pill input[type=radio] {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    width: 15px; height: 15px; flex-shrink: 0;
+    border: 1px solid var(--border); border-radius: 50%;
+    background: var(--bg); cursor: pointer; position: relative; margin: 0;
+  }
+  .check-pill input[type=radio]:checked { border-color: var(--accent); }
+  .check-pill input[type=radio]:checked::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  }
+
+  /* ---------- Jogos ---------- */
+  #gamesPanel { max-width: 1050px; }
+  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 18px; margin-top: 20px; }
+  .game-card {
+    position: relative; border-radius: 14px; overflow: hidden; cursor: pointer;
+    border: 1px solid var(--border); background: var(--panel);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .game-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 32px rgba(0,0,0,0.45); }
+  .game-cover {
+    height: 130px; display: flex; align-items: center; justify-content: center;
+    font-size: 54px; filter: brightness(0.55) saturate(0.7); transition: filter 0.25s ease;
+  }
+  .game-card:hover .game-cover { filter: brightness(1.1) saturate(1.15); }
+  .game-title { padding: 12px 14px; font-size: 14px; font-weight: 600; }
+  .game-card.locked { cursor: default; opacity: 0.55; }
+  .game-card.locked:hover { transform: none; box-shadow: none; }
+  .game-card.locked .game-cover { filter: brightness(0.4) saturate(0.3); }
+  .game-lock-badge {
+    position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff;
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+  }
+  .cover-blackjack { background: radial-gradient(circle at 30% 30%, #1a5c3a, #0b2e1c); }
+  .cover-mines { background: radial-gradient(circle at 30% 30%, #4a3a2a, #241a10); }
+  .cover-flags { background: radial-gradient(circle at 30% 30%, #2a4a6a, #12222f); }
+  .cover-blocks { background: radial-gradient(circle at 30% 30%, #4a2a5a, #23142c); }
+  .cover-solitaire { background: radial-gradient(circle at 30% 30%, #5a2a2a, #2c1414); }
+  .cover-map { background: radial-gradient(circle at 30% 30%, #2a5a4a, #123024); }
+  .cover-roleta { background: radial-gradient(circle at 30% 30%, #6a3a1a, #2f1a0a); }
+
+  .card-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .playing-card {
+    width: 52px; height: 74px; border-radius: 6px; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  }
+
+  @keyframes msFlagPop { 0% { transform: scale(0) rotate(-15deg); } 60% { transform: scale(1.3) rotate(8deg); } 100% { transform: scale(1) rotate(0deg); } }
+  .ms-flag-add { animation: msFlagPop 0.25s ease; }
+  @keyframes msFlagOut { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 100% { transform: scale(0) rotate(50deg); opacity: 0; } }
+  .ms-flag-remove { animation: msFlagOut 0.22s ease forwards; }
+  @keyframes msExplode { 0% { transform: scale(0.2); opacity: 0.4; } 45% { transform: scale(1.7); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+  .ms-explode { animation: msExplode 0.45s ease; }
+
+  /* explosão em tela cheia do campo minado */
+  #msExplosionOverlay { position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  #msExplosionFlash { position: absolute; inset: 0; background: radial-gradient(circle, #ff9800 0%, #c0392b 40%, #1a0500 100%); opacity: 0; }
+  #msExplosionFlash.go { animation: msFlashAnim 0.6s ease forwards; }
+  @keyframes msFlashAnim { 0% { opacity: 0; transform: scale(0.3); } 30% { opacity: 1; transform: scale(1.4); } 100% { opacity: 0.88; transform: scale(1); } }
+  #msExplosionText { position: relative; font-size: clamp(32px, 8vw, 72px); font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff3d00, 0 0 45px #ff3d00; letter-spacing: 2px; opacity: 0; text-align: center; }
+  #msExplosionText.go { animation: msTextAnim 0.55s 0.12s ease forwards; }
+  @keyframes msTextAnim { 0% { opacity: 0; transform: scale(0.3) rotate(-15deg); } 60% { opacity: 1; transform: scale(1.3) rotate(5deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
+
+  .bj-play-again-btn {
+    margin-top: 14px; padding: 14px 28px; font-size: 16px; font-weight: 800;
+    border: none; border-radius: 999px; cursor: pointer; color: #06251f;
+    background: linear-gradient(135deg, #4FD1C5, #ffd166);
+    box-shadow: 0 0 0 rgba(79,209,197,0.6);
+    animation: bjPulse 1.4s ease-in-out infinite;
+  }
+  .bj-play-again-btn:hover { transform: translateY(-2px) scale(1.03); }
+  @keyframes bjPulse {
+    0% { box-shadow: 0 0 0 0 rgba(79,209,197,0.55); }
+    70% { box-shadow: 0 0 0 14px rgba(79,209,197,0); }
+    100% { box-shadow: 0 0 0 0 rgba(79,209,197,0); }
+  }
+
+  /* paciência */
+  .sol-pile { width: 60px; height: 84px; border-radius: 6px; border: 2px dashed rgba(255,255,255,0.28); position: relative; flex-shrink: 0; }
+  .sol-col { width: 60px; min-height: 84px; position: relative; flex-shrink: 0; }
+  .sol-card {
+    position: absolute; width: 60px; height: 84px; border-radius: 6px; background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35); display: flex; align-items: flex-start; justify-content: flex-start;
+    padding: 5px 6px; font-size: 14px; font-weight: 700; box-sizing: border-box; cursor: grab; transition: transform 0.12s ease;
+  }
+  .sol-card.back { background: repeating-linear-gradient(45deg,#2a5db0,#2a5db0 6px,#1f4a8a 6px,#1f4a8a 12px); cursor: default; }
+  .sol-card.selected { outline: 3px solid #4FD1C5; transform: translateY(-4px); }
+
+  /* rodapé de crédito */
+  #siteFooterCredit {
+    position: fixed; bottom: 3px; left: 0; right: 0; text-align: center;
+    font-size: 9px; color: var(--muted); opacity: 0.45; pointer-events: none; z-index: 5; letter-spacing: 0.02em;
+  }
+
+  /* trava de rolagem lateral no celular */
+  html, body { overflow-x: hidden; }
+
+  #gameMobileMenuBtn {
+    position: fixed; top: 14px; left: 14px; width: 42px; height: 42px; border-radius: 50%;
+    background: var(--panel); border: 1px solid var(--border); display: flex; align-items: center;
+    justify-content: center; font-size: 18px; z-index: 96; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  }
+  @media (min-width: 769px) { #gameMobileMenuBtn { display: none !important; } }
+
+  /* currículo */
+  .entry-row {
+    background: #10151c;
+    border: 1px solid #2a3444;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .entry-remove {
+    position: absolute; top: 10px; right: 10px;
+    background: none; border: none; color: #8B96A8; cursor: pointer; font-size: 16px;
+  }
+  .entry-remove:hover { color: #F87171; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px dashed #2a3444;
+    color: #8B96A8;
+    padding: 9px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .btn-ghost:hover { border-color: #4FD1C5; color: #4FD1C5; }
+
+  /* gráfico de pizza - planejamento financeiro */
+  .pie-wrap { display: flex; align-items: center; gap: 28px; margin-top: 18px; flex-wrap: wrap; }
+  .pie {
+    width: 140px; height: 140px; border-radius: 50%; flex-shrink: 0;
+  }
+  .pie-legend { display: flex; flex-direction: column; gap: 10px; }
+  .pie-legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .pie-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .totals-box { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+
+  /* tela de boas-vindas */
+  #welcomeOverlay {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50;
+  }
+  #welcomeOverlay .welcome-text {
+    font-size: 28px; font-weight: 700; color: var(--text);
+    opacity: 0; transform: translateY(10px) scale(0.96);
+    animation: welcomeIn 1.4s ease forwards;
+  }
+  #welcomeOverlay .welcome-text span { color: var(--accent); }
+  @keyframes welcomeIn {
+    0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+    30% { opacity: 1; transform: translateY(0) scale(1); }
+    80% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-6px) scale(1.02); }
+  }
+
+  /* configurações de aparência */
+  .swatch-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .swatch-field { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .swatch-field label { font-size: 12px; color: var(--muted); }
+  .swatch-field input[type=color] { width: 56px; height: 56px; border: 1px solid var(--border); border-radius: 10px; padding: 4px; background: var(--bg); cursor: pointer; }
+
+
+  /* gerador de treino */
+  .week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 18px; }
+  .day-card { background: #10151c; border: 1px solid #2a3444; border-radius: 10px; padding: 12px; }
+  .day-card.rest { opacity: 0.55; }
+  .day-card .day-name { font-size: 12px; color: #8B96A8; margin-bottom: 4px; }
+  .day-card .day-focus { font-size: 14px; font-weight: 600; color: #4FD1C5; margin-bottom: 8px; }
+  .day-card.rest .day-focus { color: #8B96A8; }
+  .day-card ul { margin: 0; padding-left: 16px; font-size: 12px; color: #c7cfdb; }
+  .day-card li { margin-bottom: 4px; }
+  .goal-tag { display: inline-block; background: #1e2733; color: #4FD1C5; font-size: 12px; padding: 5px 12px; border-radius: 999px; margin-bottom: 4px; }
+
+  #resumePreview {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 8px;
+    padding: 40px;
+    font-family: Georgia, serif;
+    display: none;
+    --cv-accent: #4FD1C5;
+  }
+  .cv-header { display: flex; align-items: center; gap: 18px; margin-bottom: 4px; }
+  #pvFoto { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid var(--cv-accent); }
+  #resumePreview h2 { margin: 0 0 2px; font-size: 24px; }
+  #resumePreview .cv-meta { color: #555; font-size: 13px; margin-bottom: 20px; }
+  #resumePreview h4 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--cv-accent); border-bottom: 2px solid var(--cv-accent); padding-bottom: 4px; margin: 22px 0 10px;
+  }
+  #resumePreview .cv-item { margin-bottom: 10px; }
+  #resumePreview .cv-item .cv-title { font-weight: 700; font-size: 14px; }
+  #resumePreview .cv-item .cv-sub { font-size: 12px; color: #666; }
+  #resumePreview .cv-desc { font-size: 12px; color: #444; margin: 4px 0 0; line-height: 1.5; }
+  #resumePreview p.cv-sub { font-size: 13px; color: #333; line-height: 1.6; margin: 0; }
+  #resumePreview .cv-meta.cv-contato { margin-bottom: 4px; }
+
+  @media print {
+    body * { visibility: hidden; }
+    #resumePreview, #resumePreview * { visibility: visible; }
+    #resumePreview { position: absolute; top: 0; left: 0; width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== TELA DE LOGIN / CADASTRO ============== -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div id="loginView">
+      <p class="auth-title">Entrar</p>
+      <p class="auth-subtitle">Acesse sua conta para continuar</p>
+      <div id="loginMsg"></div>
+      <div class="field">
+        <label>Usuário</label>
+        <input type="text" id="loginUser" placeholder="seu usuário">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="loginPass" placeholder="sua senha">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
+      <p class="switch-link" style="margin-top:20px; line-height:1.6;">
+        Acesso restrito. Para adquirir uma conta, fale com o administrador.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div id="welcomeOverlay" class="hidden">
+  <div class="welcome-text" id="welcomeText"></div>
+</div>
+
+<div id="askNameOverlay" class="hidden" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:60;">
+  <div class="auth-card">
+    <p class="auth-title">Como podemos te chamar?</p>
+    <p class="auth-subtitle">Primeiro acesso com esse login — diga seu nome para personalizarmos as boas-vindas.</p>
+    <div class="field">
+      <input type="text" id="askNameInput" placeholder="Seu nome" onkeydown="if(event.key==='Enter') confirmName()">
+    </div>
+    <button class="btn btn-primary" onclick="confirmName()">Continuar</button>
+  </div>
+</div>
+
+<div id="gamePauseMenu" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:95;">
+  <div class="auth-card" style="text-align:center; max-width:320px;">
+    <p class="auth-title">Jogo pausado</p>
+    <div class="field" style="text-align:left; margin-bottom:14px;">
+      <label>Cor de fundo do painel</label>
+      <input type="color" id="gamePauseBgColor" onchange="changeGameBg(this.value)">
+    </div>
+    <button class="btn btn-primary" style="margin-bottom:10px" onclick="closePauseMenu()">Continuar jogando</button>
+    <button class="btn-ghost" style="width:100%" onclick="exitGame()">Sair do jogo</button>
+  </div>
+</div>
+
+<div id="logoutConfirmOverlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:97;">
+  <div class="auth-card" style="text-align:center; max-width:320px;">
+    <p class="auth-title">Sair da conta</p>
+    <p class="auth-subtitle">Tem certeza que deseja sair?</p>
+    <button class="btn btn-primary" style="margin-bottom:10px; background-color:#F87171; background-image:none;" onclick="confirmLogout()">Sair</button>
+    <button class="btn-ghost" style="width:100%" onclick="cancelLogout()">Não sair</button>
+  </div>
+</div>
+
+<div id="gameMobileMenuBtn" class="hidden" onclick="toggleGamePause()">☰</div>
+
+<div id="msExplosionOverlay" class="hidden">
+  <div id="msExplosionFlash"></div>
+  <div id="msExplosionText">💥 SE FODEU 💥</div>
+</div>
+
+<div id="siteFooterCredit">desenvolvido e pensado por Gabriel Luiz Resende</div>
+
+<!-- ============== TRILHA SONORA AMBIENTE ============== -->
+<div id="musicToggleBtn" title="Música" onclick="toggleMusic()" style="position:fixed; bottom:24px; right:84px; width:48px; height:48px; border-radius:50%; background-color:var(--panel); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,0.35); z-index:85;">🎵</div>
+
+<!-- ============== CALCULADORA FLUTUANTE (F9) ============== -->
+<div id="calcOpenBtn" title="Calculadora" onclick="toggleCalc()" style="position:fixed; bottom:24px; right:24px; width:48px; height:48px; border-radius:50%; background-color:var(--accent); background-image:var(--accent-image); background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,0.35); z-index:85;">🧮</div>
+<div id="calcWidget" class="hidden" style="position:fixed; top:90px; left:calc(100% - 260px); width:230px; max-width:92vw; background-color:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 16px 36px rgba(0,0,0,0.45); z-index:90; overflow:hidden;">
+  <div id="calcHeader" style="padding:10px 14px; background:#1e2733; cursor:move; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text); user-select:none; touch-action:none;">
+    <span>Calculadora</span>
+    <span style="cursor:pointer" onclick="toggleCalc()">✕</span>
+  </div>
+  <div style="padding:12px;">
+    <div id="calcDisplay" style="width:100%; text-align:right; font-size:20px; padding:10px; margin-bottom:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); box-sizing:border-box; overflow-x:auto; white-space:nowrap; scrollbar-width:thin;"></div>
+    <div id="calcButtons" style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px;"></div>
+  </div>
+</div>
+
+<!-- ============== PAINEL PRINCIPAL ============== -->
+<div id="dashboard" class="hidden">
+  <div id="sidebar">
+    <div class="sidebar-toggle" onclick="toggleSidebar()" title="Abrir/fechar menu">☰</div>
+    <div class="side-header">
+      <p class="user-name" id="sideUserName">Usuário</p>
+      <p class="user-tag">Painel pessoal</p>
+    </div>
+    <div class="nav-item active" data-panel="financePanel" onclick="switchPanel('financePanel', this)">
+      <span class="nav-icon">$</span><span class="nav-label"> Planejamento financeiro</span>
+    </div>
+    <div class="nav-item" data-panel="resumePanel" onclick="switchPanel('resumePanel', this)">
+      <span class="nav-icon">▤</span><span class="nav-label"> Gerador de currículo</span>
+    </div>
+    <div class="nav-item" data-panel="workoutPanel" onclick="switchPanel('workoutPanel', this)">
+      <span class="nav-icon">🏋</span><span class="nav-label"> Gerador de treino</span>
+    </div>
+    <div class="nav-item" data-panel="gamesPanel" onclick="switchPanel('gamesPanel', this)">
+      <span class="nav-icon">🎮</span><span class="nav-label"> Jogos</span>
+    </div>
+    <div class="nav-item" data-panel="settingsPanel" onclick="switchPanel('settingsPanel', this)">
+      <span class="nav-icon">⚙</span><span class="nav-label"> Configurações</span>
+    </div>
+    <div class="logout-btn" onclick="askLogout()"><span class="nav-icon">⏻</span><span class="logout-label">Sair da conta</span></div>
+  </div>
+
+  <div id="content">
+
+    <!-- ---- PAINEL: PLANEJAMENTO FINANCEIRO ---- -->
+    <div class="panel active" id="financePanel">
+      <h1>Planejamento financeiro</h1>
+      <p class="sub">Escolha o tipo de cálculo e simule seu investimento</p>
+
+      <div class="card">
+        <h3>Dados da simulação</h3>
+        <div class="grid-2">
+          <div class="field" style="margin-bottom:0">
+            <label>Tipo de cálculo</label>
+            <select id="fTipo">
+              <option value="simples">Juros simples</option>
+              <option value="composto">Juros compostos</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Periodicidade</label>
+            <select id="fPeriodo" onchange="atualizarRotulosPeriodo()">
+              <option value="mensal">Mensal</option>
+              <option value="anual">Anual</option>
+              <option value="diario">Diário</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:14px">
+          <div class="field" style="margin-bottom:0">
+            <label>Capital inicial (R$)</label>
+            <input type="number" id="fCapital" value="1000">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label id="fTaxaLabel">Taxa (% ao mês)</label>
+            <input type="number" id="fTaxa" value="2" step="0.01">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label id="fTempoLabel">Tempo (meses)</label>
+            <input type="number" id="fTempo" value="12">
+          </div>
+        </div>
+        <div class="field" id="fAporteWrap" style="margin-top:14px; margin-bottom:0">
+          <label id="fAporteLabel">Aporte mensal (R$)</label>
+          <input type="number" id="fAporte" value="0">
+        </div>
+        <button class="btn btn-primary" style="margin-top:18px" onclick="calcularJuros()">Calcular</button>
+      </div>
+
+      <div class="card" id="financeResultCard" style="display:none">
+        <h3>Resultado — <span id="resultTipoLabel"></span></h3>
+        <div class="pie-wrap">
+          <div class="pie" id="pieChart"></div>
+          <div class="pie-legend">
+            <div class="pie-legend-item"><span class="pie-swatch" style="background:var(--accent)"></span> Capital investido: <strong id="pieCapitalLabel">—</strong></div>
+            <div class="pie-legend-item"><span class="pie-swatch" style="background:#F0997B"></span> Lucro total: <strong id="pieLucroLabel">—</strong></div>
+          </div>
+        </div>
+        <div class="totals-box">
+          <div class="result-stat teal">
+            <div class="label">Valor total</div>
+            <div class="value" id="rValorTotal">—</div>
+          </div>
+          <div class="result-stat coral">
+            <div class="label" id="rLucroLabel">Rendimento do último mês</div>
+            <div class="value" id="rLucroMensal">—</div>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="financeTable">
+            <thead>
+              <tr><th id="thPeriodo">Mês</th><th>Rendimento do período</th><th>Montante</th></tr>
+            </thead>
+            <tbody id="financeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- PAINEL: GERADOR DE CURRÍCULO ---- -->
+    <div class="panel" id="resumePanel">
+      <h1>Gerador de currículo</h1>
+      <p class="sub">Preencha seus dados para gerar um currículo pronto para imprimir</p>
+
+      <div class="card">
+        <h3>Dados pessoais</h3>
+        <div class="grid-2">
+          <div class="field" style="margin-bottom:0">
+            <label>Nome completo</label>
+            <input type="text" id="cvNome" placeholder="Seu nome">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Idade</label>
+            <input type="number" id="cvIdade" placeholder="Ex: 28">
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:14px">
+          <div class="field" style="margin-bottom:0">
+            <label>Cidade</label>
+            <input type="text" id="cvCidade" placeholder="Ex: Curitiba">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Estado</label>
+            <input type="text" id="cvEstado" placeholder="Ex: PR">
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:14px">
+          <div class="field" style="margin-bottom:0">
+            <label>Telefone (com DDD)</label>
+            <input type="text" id="cvTelefone" placeholder="Ex: (41) 99999-9999">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>E-mail profissional</label>
+            <input type="email" id="cvEmail" placeholder="seunome@email.com">
+          </div>
+        </div>
+        <div class="field" style="margin-top:14px; margin-bottom:0">
+          <label>LinkedIn (opcional)</label>
+          <input type="text" id="cvLinkedin" placeholder="linkedin.com/in/seunome">
+        </div>
+        <div class="field" style="margin-top:14px; margin-bottom:0">
+          <label>Objetivo profissional</label>
+          <textarea id="cvObjetivo" rows="3" placeholder="Ex: Atuar na área de vendas, contribuindo com atendimento ao cliente e organização de processos."></textarea>
+        </div>
+        <div class="grid-2" style="margin-top:14px">
+          <div class="field" style="margin-bottom:0">
+            <label>Cor do currículo</label>
+            <input type="color" id="cvColor" value="#2F80ED">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Foto (opcional)</label>
+            <input type="file" id="cvFoto" accept="image/*">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Experiência profissional</h3>
+        <div id="workList"></div>
+        <button class="btn-ghost" onclick="addWorkRow()">+ Adicionar experiência</button>
+      </div>
+
+      <div class="card">
+        <h3>Formação / estudos</h3>
+        <div id="eduList"></div>
+        <button class="btn-ghost" onclick="addEduRow()">+ Adicionar formação</button>
+      </div>
+
+      <div class="card">
+        <h3>Habilidades e competências</h3>
+        <div class="field" style="margin-bottom:0">
+          <label>Separe por vírgula</label>
+          <textarea id="cvHabilidades" rows="2" placeholder="Ex: Atendimento ao cliente, Excel, Trabalho em equipe, Organização"></textarea>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="gerarCurriculo()">Gerar currículo</button>
+
+      <div class="card" style="margin-top:24px" id="previewCard" style="display:none">
+        <div id="resumePreview">
+          <div class="cv-header">
+            <img id="pvFoto" alt="Foto">
+            <div>
+              <h2 id="pvNome"></h2>
+              <p class="cv-meta" id="pvMeta"></p>
+              <p class="cv-meta" id="pvContato"></p>
+            </div>
+          </div>
+          <div id="pvObjetivoWrap">
+            <h4>Objetivo profissional</h4>
+            <p class="cv-sub" id="pvObjetivo"></p>
+          </div>
+          <h4>Experiência profissional</h4>
+          <div id="pvWork"></div>
+          <h4>Formação</h4>
+          <div id="pvEdu"></div>
+          <div id="pvHabilidadesWrap">
+            <h4>Habilidades e competências</h4>
+            <p class="cv-sub" id="pvHabilidades"></p>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary hidden" id="printBtn" style="margin-top:12px; background:#2a3444; color:#E7ECF3" onclick="window.print()">Imprimir / salvar como PDF</button>
+    </div>
+
+    <!-- ---- PAINEL: GERADOR DE TREINO ---- -->
+    <div class="panel" id="workoutPanel">
+      <h1>Gerador de treino</h1>
+      <p class="sub">Selecione um ou mais objetivos e monte sua agenda semanal de treinos</p>
+
+      <div class="card">
+        <h3>Seus objetivos</h3>
+        <div class="field" style="margin-bottom:0">
+          <label>Selecione um ou mais objetivos</label>
+          <div class="checkbox-row">
+            <label class="check-pill"><input type="checkbox" class="goal-check" value="hipertrofia" checked> Hipertrofia</label>
+            <label class="check-pill"><input type="checkbox" class="goal-check" value="forca"> Força</label>
+            <label class="check-pill"><input type="checkbox" class="goal-check" value="emagrecimento"> Emagrecimento</label>
+            <label class="check-pill"><input type="checkbox" class="goal-check" value="resistencia"> Resistência</label>
+            <label class="check-pill"><input type="checkbox" class="goal-check" value="mobilidade"> Mobilidade</label>
+          </div>
+        </div>
+        <div class="field" style="margin-top:14px; margin-bottom:0; max-width:260px">
+          <label>Dias livres na semana para treinar</label>
+          <input type="number" id="wDias" min="1" max="7" value="3">
+        </div>
+        <button class="btn btn-primary" style="margin-top:18px" onclick="gerarTreino()">Gerar treino</button>
+      </div>
+
+      <div class="card" id="workoutResultCard" style="display:none">
+        <h3>Sua agenda da semana</h3>
+        <span class="goal-tag" id="detectedGoalTag"></span>
+        <div class="week-grid" id="weekGrid"></div>
+      </div>
+    </div>
+
+    <!-- ---- PAINEL: JOGOS ---- -->
+    <div class="panel" id="gamesPanel">
+      <div id="gamesGrid">
+        <h1>Jogos</h1>
+        <p class="sub">Escolha um jogo para começar</p>
+        <div class="games-grid">
+          <div class="game-card" onclick="openGame('blackjack')">
+            <div class="game-cover cover-blackjack">🃏</div>
+            <div class="game-title">Blackjack</div>
+          </div>
+          <div class="game-card" onclick="openGame('minesweeper')">
+            <div class="game-cover cover-mines">💣</div>
+            <div class="game-title">Campo Minado</div>
+          </div>
+          <div class="game-card" onclick="openGame('flags')">
+            <div class="game-cover cover-flags">🌍</div>
+            <div class="game-title">Adivinhe a Bandeira</div>
+          </div>
+          <div class="game-card" onclick="openGame('blockblast')">
+            <div class="game-cover cover-blocks">🧱</div>
+            <div class="game-title">Block Blast</div>
+          </div>
+          <div class="game-card" onclick="openGame('solitaire')">
+            <div class="game-cover cover-solitaire">🂡</div>
+            <div class="game-title">Paciência</div>
+          </div>
+          <div class="game-card" onclick="openGame('roleta')">
+            <div class="game-cover cover-roleta">🎡</div>
+            <div class="game-title">Roleta da Sorte</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="gameContainer" class="hidden">
+
+        <!-- ---- BLACKJACK ---- -->
+        <div id="blackjackGame" class="hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="margin:0">Blackjack</h2>
+            <button class="btn-ghost" style="width:auto; padding:8px 14px" onclick="exitGame()">← Voltar aos jogos</button>
+          </div>
+
+          <div id="bjTables">
+            <div class="card">
+              <h3>Suas moedas: <span id="bjCoins">0</span> 🪙</h3>
+              <button class="btn btn-primary" id="bjClaimBtn" style="width:auto; padding:10px 18px" onclick="claimDailyCoins()">Resgatar 200 moedas de hoje</button>
+              <p id="bjSpecialNote" class="sub" style="margin-top:10px"></p>
+            </div>
+            <div class="card">
+              <h3>Escolha uma mesa</h3>
+              <div class="week-grid" id="bjTableList"></div>
+            </div>
+          </div>
+
+          <div id="bjPlay" class="hidden">
+            <div class="card" style="background-color:#0b2e1c; background-image:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                <span style="color:#cdeedd; font-size:13px">Mesa: <strong id="bjTableValue">-</strong> moedas</span>
+                <span style="color:#cdeedd; font-size:13px">Rodada: <strong id="bjRoundInfo">-</strong></span>
+                <span style="color:#cdeedd; font-size:13px">Moedas: <strong id="bjCoinsInGame">-</strong> 🪙</span>
+              </div>
+              <p style="color:var(--accent); font-size:14px; font-weight:700; margin:0 0 14px;">Placar: Você <span id="bjPlayerWinsTxt">0</span> x <span id="bjDealerWinsTxt">0</span> Dealer</p>
+              <div style="display:flex; gap:24px; align-items:flex-start;">
+                <div style="flex-shrink:0; margin-top:4px; text-align:center;">
+                  <div id="bjDeckStack" style="position:relative; width:60px; height:80px;"></div>
+                  <p style="color:#9fc7ae; font-size:10px; margin:6px 0 0; max-width:70px;">Clique para pedir carta</p>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <p style="color:#cdeedd; font-size:13px; margin-bottom:6px">Dealer <span id="bjDealerScore"></span></p>
+                  <div id="bjDealerHand" class="card-row"></div>
+                  <p style="color:#cdeedd; font-size:13px; margin:16px 0 6px">Você <span id="bjPlayerScore"></span></p>
+                  <div id="bjPlayerHand" class="card-row"></div>
+                </div>
+              </div>
+              <div style="margin-top:20px; display:flex; gap:10px;">
+                <button class="btn btn-primary" id="bjStandBtn" style="width:auto; padding:10px 18px; background-color:#2a3444; background-image:none" onclick="bjStand()">Parar</button>
+              </div>
+              <p id="bjResultMsg" style="margin-top:16px; font-size:15px; font-weight:600; color:#fff;"></p>
+              <button class="hidden bj-play-again-btn" id="bjNextRoundBtn" onclick="bjNextRound()">▶ Próxima rodada</button>
+              <button class="hidden bj-play-again-btn" id="bjPlayAgainBtn" onclick="bjPlayAgain()">🔁 Jogar de novo (mesma aposta)</button>
+              <button class="hidden btn-ghost" id="bjChangeTableBtn" style="width:auto; padding:8px 14px; margin-top:8px; margin-left:10px; display:inline-block;" onclick="bjBackToTables()">Escolher outra mesa</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---- ROLETA DA SORTE ---- -->
+        <div id="roletaGame" class="hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="margin:0">Roleta da Sorte</h2>
+            <button class="btn-ghost" style="width:auto; padding:8px 14px" onclick="exitGame()">← Voltar aos jogos</button>
+          </div>
+
+          <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+            <div class="card" style="flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:16px; padding-top:28px;">
+              <div style="position:relative; width:280px; height:280px;">
+                <div style="position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent; border-top:24px solid var(--accent); z-index:5; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4));"></div>
+                <div id="rlWheel" style="width:280px; height:280px; border-radius:50%; border:6px solid var(--panel); box-shadow:0 8px 26px rgba(0,0,0,0.5); position:relative; transform:rotate(0deg); transition: transform 4s cubic-bezier(.15,.85,.25,1);"></div>
+                <div id="rlHighlight" style="position:absolute; top:0; left:0; width:280px; height:280px; border-radius:50%; pointer-events:none; opacity:0; transition:opacity 0.35s ease; z-index:3;"></div>
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:50%; background:var(--panel); border:3px solid var(--accent); z-index:5;"></div>
+              </div>
+              <button class="btn btn-primary" id="rlSpinBtn" style="width:auto; padding:11px 28px" onclick="rlSpin()">🎡 Girar</button>
+              <p id="rlResultMsg" style="font-size:16px; font-weight:700; min-height:24px; text-align:center; margin:0;"></p>
+            </div>
+
+            <div class="card" style="flex:1; min-width:260px;">
+              <h3 style="margin-top:0">Itens da roleta</h3>
+              <p class="sub" style="margin-top:-6px">Adicione quantas opções quiser e gire quando quiser.</p>
+              <div style="display:flex; gap:8px; margin-bottom:14px;">
+                <input type="text" id="rlNewItem" placeholder="Digite um item..." maxlength="40"
+                  style="flex:1; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:14px; font-family:inherit;"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault(); rlAddItem();}">
+                <button class="btn btn-primary" style="width:auto; padding:10px 18px" onclick="rlAddItem()">Adicionar</button>
+              </div>
+              <div id="rlItemsList" style="display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto;"></div>
+              <button class="btn-ghost" style="width:auto; padding:8px 14px; margin-top:14px" onclick="rlClearItems()">🗑️ Limpar tudo</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---- CAMPO MINADO ---- -->
+        <div id="minesweeperGame" class="hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="margin:0">Campo Minado</h2>
+            <button class="btn-ghost" style="width:auto; padding:8px 14px" onclick="exitGame()">← Voltar aos jogos</button>
+          </div>
+          <div class="card">
+            <div class="checkbox-row" style="margin-bottom:14px">
+              <label class="check-pill"><input type="radio" name="msLevel" value="facil" checked onclick="msInit()"> Fácil (10x10)</label>
+              <label class="check-pill"><input type="radio" name="msLevel" value="medio" onclick="msInit()"> Médio (15x20)</label>
+              <label class="check-pill"><input type="radio" name="msLevel" value="dificil" onclick="msInit()"> Difícil (25x30)</label>
+              <label class="check-pill"><input type="radio" name="msLevel" value="impossivel" onclick="msInit()"> Impossível (45x50)</label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:13px; color:var(--muted)">
+              <span>💣 Minas restantes: <strong id="msMinesLeft">-</strong></span>
+              <button class="btn-ghost" style="width:auto; padding:6px 14px" onclick="msInit()">Novo jogo</button>
+            </div>
+            <p id="msStatusMsg" style="font-size:14px; font-weight:700; min-height:22px; text-align:center;"></p>
+            <div id="msBoardWrap" style="display:flex; justify-content:center; border:1px solid var(--border); border-radius:8px; padding:10px; background:var(--bg);">
+              <div id="msBoard"></div>
+            </div>
+            <p class="sub" style="margin-top:10px">Clique esquerdo para revelar. Clique direito para marcar uma bandeira.</p>
+          </div>
+        </div>
+
+        <!-- ---- BANDEIRAS ---- -->
+        <div id="flagsGame" class="hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="margin:0">Adivinhe a Bandeira</h2>
+            <button class="btn-ghost" style="width:auto; padding:8px 14px" onclick="exitGame()">← Voltar aos jogos</button>
+          </div>
+
+          <div class="card" id="flagsPlayCard">
+            <p class="sub" style="margin-bottom:6px">Bandeira <span id="flagsProgress">1 / 196</span></p>
+            <div style="display:flex; justify-content:center; margin:16px 0;">
+              <img id="flagsImg" src="" alt="Bandeira" style="width:260px; max-width:100%; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.4); border:1px solid var(--border);">
+            </div>
+            <p id="flagsHintText" style="text-align:center; color:var(--accent); font-size:14px; min-height:20px;"></p>
+            <div style="display:flex; gap:10px; max-width:420px; margin:0 auto;">
+              <div class="field" style="flex:1; margin-bottom:0;">
+                <input type="text" id="flagsInput" placeholder="Digite o nome do país" onkeydown="if(event.key==='Enter') flagsSubmit()">
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap;">
+              <button class="btn btn-primary" style="width:auto; padding:10px 18px" onclick="flagsSubmit()">Responder</button>
+              <button class="btn-ghost" style="width:auto; padding:10px 18px" onclick="flagsHint()">Dica (1x por bandeira)</button>
+              <button class="btn-ghost" style="width:auto; padding:10px 18px" onclick="flagsSkip()">Pular</button>
+            </div>
+            <p id="flagsFeedback" style="text-align:center; margin-top:14px; font-size:14px; font-weight:600; min-height:20px;"></p>
+            <div style="display:flex; gap:20px; justify-content:center; margin-top:10px; font-size:13px; color:var(--muted)">
+              <span>✅ <span id="flagsAcertos">0</span></span>
+              <span>❌ <span id="flagsErros">0</span></span>
+              <span>⏭ <span id="flagsPuladas">0</span></span>
+            </div>
+          </div>
+
+          <div class="card hidden" id="flagsSummaryCard">
+            <h3>Desempenho final</h3>
+            <div class="totals-box">
+              <div class="result-stat teal"><div class="label">Acertos</div><div class="value" id="sumAcertos">-</div></div>
+              <div class="result-stat coral"><div class="label">Erros</div><div class="value" id="sumErros">-</div></div>
+              <div class="result-stat"><div class="label">Puladas</div><div class="value" id="sumPuladas">-</div></div>
+              <div class="result-stat teal"><div class="label">Aproveitamento</div><div class="value" id="sumPct">-</div></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:20px; width:auto; padding:10px 18px" onclick="flagsInit()">Jogar novamente</button>
+          </div>
+        </div>
+
+        <!-- ---- BLOCK BLAST ---- -->
+        <div id="blockblastGame" class="hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="margin:0">Block Blast</h2>
+            <button class="btn-ghost" style="width:auto; padding:8px 14px" onclick="exitGame()">← Voltar aos jogos</button>
+          </div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <span style="font-size:14px;">Pontuação: <strong id="bbScore">0</strong></span>
+              <button class="btn-ghost" style="width:auto; padding:6px 14px" onclick="bbInit()">Novo jogo</button>
+            </div>
+            <p id="bbStatusMsg" style="font-size:14px; font-weight:700; min-height:22px; text-align:center;"></p>
+            <div style="display:flex; justify-content:center;">
+              <div id="bbBoard"></div>
+            </div>
+            <div id="bbTray" style="display:flex; justify-content:center; gap:20px; margin-top:20px; flex-wrap:wrap;"></div>
+            <p class="sub" style="margin-top:10px; text-align:center;">Arraste uma peça até o tabuleiro para posicioná-la.</p>
+          </div>
+        </div>
+
+        <!-- ---- PACIÊNCIA ---- -->
+        <div id="solitaireGame" class="hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="margin:0">Paciência</h2>
+            <button class="btn-ghost" style="width:auto; padding:8px 14px" onclick="exitGame()">← Voltar aos jogos</button>
+          </div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <label style="font-size:12px; color:var(--muted);">Cor do fundo da mesa:</label>
+                <input type="color" id="solBgColor" value="#0b3d24" onchange="solSetBg(this.value)">
+              </div>
+              <button class="btn-ghost" style="width:auto; padding:6px 14px" onclick="solInit()">Novo jogo</button>
+            </div>
+            <p id="solStatusMsg" style="font-size:14px; font-weight:700; min-height:22px; text-align:center;"></p>
+            <div id="solTable" style="border-radius:10px; padding:16px; background:#0b3d24; overflow-x:auto;">
+              <div style="display:flex; gap:14px; margin-bottom:22px; min-width:520px;">
+                <div id="solStock" class="sol-pile" onclick="solDrawStock()"></div>
+                <div id="solWaste" class="sol-pile"></div>
+                <div style="flex:1"></div>
+                <div class="sol-pile" id="solFound0" data-found="0"></div>
+                <div class="sol-pile" id="solFound1" data-found="1"></div>
+                <div class="sol-pile" id="solFound2" data-found="2"></div>
+                <div class="sol-pile" id="solFound3" data-found="3"></div>
+              </div>
+              <div id="solTableau" style="display:flex; gap:14px; min-width:520px;"></div>
+            </div>
+            <p class="sub" style="margin-top:10px">Arraste uma carta (ou grupo) até o destino. Só aceita onde a jogada for válida.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---- PAINEL: CONFIGURAÇÕES ---- -->
+    <div class="panel" id="settingsPanel">
+      <h1>Configurações</h1>
+      <p class="sub">Personalize a aparência do painel</p>
+
+      <div class="card">
+        <h3>Cores</h3>
+        <div class="swatch-row">
+          <div class="swatch-field">
+            <input type="color" id="setBg" value="#10151c">
+            <label>Fundo</label>
+          </div>
+          <div class="swatch-field">
+            <input type="color" id="setPanel" value="#1a2230">
+            <label>Painéis / cartões</label>
+          </div>
+          <div class="swatch-field">
+            <input type="color" id="setText" value="#e7ecf3">
+            <label>Texto</label>
+          </div>
+          <div class="swatch-field">
+            <input type="color" id="setAccent" value="#4fd1c5">
+            <label>Destaque</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Imagem de fundo (opcional)</h3>
+        <p class="sub" style="margin-bottom:14px">Se escolher uma imagem, ela substitui a cor sólida daquele lugar. Não afeta o texto.</p>
+        <div class="grid-3">
+          <div class="field" style="margin-bottom:0">
+            <label>Imagem do fundo</label>
+            <input type="file" id="setBgImage" accept="image/*">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Imagem dos painéis</label>
+            <input type="file" id="setPanelImage" accept="image/*">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Imagem de destaque</label>
+            <input type="file" id="setAccentImage" accept="image/*">
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; margin-top:20px">
+          <button class="btn btn-primary" onclick="applySettings()">Aplicar</button>
+          <button class="btn-ghost" style="width:auto; padding:11px 18px" onclick="resetSettings()">Restaurar padrão</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   LOGIN
+   ============================================================ */
+/* Contas liberadas (acesso vitalício já pago) — usuário curto, nome de exibição separado */
+const ALLOWED_USERS = {
+  'g': '344618',
+  'd': '151209'
+};
+const FIXED_NAMES = {
+  'g': 'Gabriel Luiz',
+  'd': 'Danilo Anjos'
+};
+
+let currentUser = null;
+let pendingLogin = null; /* { userLower } aguardando o nome no primeiro acesso de conta gerada */
+
+function normalize(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[-']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a');
+}
+
+function showMsg(containerId, text, type) {
+  document.getElementById(containerId).innerHTML =
+    `<div class="auth-msg ${type}">${text}</div>`;
+}
+
+/* ---- contas geradas pelo botão "Comprar" (cada clique cria uma nova) ---- */
+function getDevAccounts() {
+  try { return JSON.parse(localStorage.getItem('devAccounts')) || []; }
+  catch (e) { return []; }
+}
+function saveDevAccounts(list) {
+  try { localStorage.setItem('devAccounts', JSON.stringify(list)); }
+  catch (e) { /* localStorage indisponível, segue sem salvar */ }
+}
+function generateDevAccount() {
+  const list = getDevAccounts();
+  let user;
+  do { user = 'dev' + Math.floor(1000 + Math.random() * 9000); }
+  while (list.some(a => a.user === user));
+  const pass = String(Math.floor(100000 + Math.random() * 900000));
+  list.push({ user, pass, name: null });
+  saveDevAccounts(list);
+  return { user, pass };
+}
+
+function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+
+  if (!user || !pass) {
+    showMsg('loginMsg', 'Preencha usuário e senha.', 'error');
+    return;
+  }
+
+  const userLower = user.toLowerCase();
+
+  if (ALLOWED_USERS[userLower] && ALLOWED_USERS[userLower] === pass) {
+    showWelcome(userLower, FIXED_NAMES[userLower]);
+    return;
+  }
+
+  const devAccounts = getDevAccounts();
+  const conta = devAccounts.find(a => a.user === userLower && a.pass === pass);
+  if (conta) {
+    if (!conta.name) {
+      pendingLogin = userLower;
+      document.getElementById('askNameOverlay').classList.remove('hidden');
+      document.getElementById('askNameInput').value = '';
+      return;
+    }
+    showWelcome(userLower, conta.name);
+    return;
+  }
+
+  showMsg('loginMsg',
+    'Cadastro não encontrado. Adquira o acesso vitalício ao app por <strong>R$ 15,90</strong> para liberar seu login.<br>' +
+    '<button class="btn btn-primary" style="margin-top:10px" onclick="unlockDev()">Comprar acesso — R$ 15,90</button>',
+    'error');
+}
+
+function unlockDev() {
+  const { user, pass } = generateDevAccount();
+  showMsg('loginMsg',
+    'Liberado para uso — período de desenvolvimento.<br>' +
+    'Use o usuário <strong>' + user + '</strong> e a senha <strong>' + pass + '</strong> para entrar. ' +
+    'Cada clique gera um login novo.',
+    'success');
+}
+
+function confirmName() {
+  const nome = document.getElementById('askNameInput').value.trim();
+  if (!nome || !pendingLogin) return;
+
+  const devAccounts = getDevAccounts();
+  const conta = devAccounts.find(a => a.user === pendingLogin);
+  if (conta) {
+    conta.name = nome;
+    saveDevAccounts(devAccounts);
+  }
+  document.getElementById('askNameOverlay').classList.add('hidden');
+  const userLower = pendingLogin;
+  pendingLogin = null;
+  showWelcome(userLower, nome);
+}
+
+function showWelcome(userLower, displayName) {
+  const overlay = document.getElementById('welcomeOverlay');
+  const text = document.getElementById('welcomeText');
+  text.innerHTML = `Bem-vindo, <span>${displayName}</span>!`;
+  overlay.classList.remove('hidden');
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    enterDashboard(userLower, displayName);
+  }, 1400);
+}
+
+function enterDashboard(userLower, displayName) {
+  currentUser = userLower;
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('sideUserName').textContent = displayName;
+  loadUserTheme(userLower);
+}
+
+function askLogout() {
+  document.getElementById('logoutConfirmOverlay').classList.remove('hidden');
+}
+function cancelLogout() {
+  document.getElementById('logoutConfirmOverlay').classList.add('hidden');
+}
+function confirmLogout() {
+  document.getElementById('logoutConfirmOverlay').classList.add('hidden');
+  doLogout();
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginMsg').innerHTML = '';
+}
+
+/* ============================================================
+   NAVEGAÇÃO ENTRE ABAS + MENU LATERAL
+   ============================================================ */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+function switchPanel(panelId, el) {
+  /* enquanto estiver dentro de um jogo, a navegação fica travada — só libera ao sair do jogo */
+  if (typeof currentGame !== 'undefined' && currentGame && panelId !== 'gamesPanel') {
+    return;
+  }
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ============================================================
+   JUROS SIMPLES E COMPOSTOS
+   ============================================================ */
+function brl(v) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+const PERIODO_INFO = {
+  mensal: { unidade: 'mês', unidadePlural: 'meses', taxaLabel: '% ao mês', tempoLabel: 'Tempo (meses)', aporteMostra: true },
+  anual: { unidade: 'ano', unidadePlural: 'anos', taxaLabel: '% ao ano', tempoLabel: 'Tempo (anos)', aporteMostra: true },
+  diario: { unidade: 'dia', unidadePlural: 'dias', taxaLabel: '% ao dia', tempoLabel: 'Tempo (dias)', aporteMostra: false }
+};
+
+function atualizarRotulosPeriodo() {
+  const periodo = document.getElementById('fPeriodo').value;
+  const info = PERIODO_INFO[periodo];
+  document.getElementById('fTaxaLabel').textContent = 'Taxa (' + info.taxaLabel + ')';
+  document.getElementById('fTempoLabel').textContent = info.tempoLabel;
+  document.getElementById('fAporteLabel').textContent = 'Aporte por ' + info.unidade + ' (R$)';
+  document.getElementById('thPeriodo').textContent = info.unidade.charAt(0).toUpperCase() + info.unidade.slice(1);
+  document.getElementById('fAporteWrap').style.display = info.aporteMostra ? 'block' : 'none';
+}
+
+function calcularJuros() {
+  const tipo = document.getElementById('fTipo').value;
+  const periodo = document.getElementById('fPeriodo').value;
+  const info = PERIODO_INFO[periodo];
+  const capital = parseFloat(document.getElementById('fCapital').value) || 0;
+  const taxaPct = parseFloat(document.getElementById('fTaxa').value) || 0;
+  const tempo = Math.max(1, Math.round(parseFloat(document.getElementById('fTempo').value) || 1));
+  const aporte = info.aporteMostra ? (parseFloat(document.getElementById('fAporte').value) || 0) : 0;
+  const taxa = taxaPct / 100;
+
+  /* simulação período a período, guardando o rendimento de cada período */
+  const linhas = [];
+  let saldo = capital;
+  const tempoCalculo = Math.min(tempo, 1200); /* limite de segurança para não travar com milhares de linhas */
+  for (let p = 1; p <= tempoCalculo; p++) {
+    let rendimento;
+    if (tipo === 'composto') {
+      rendimento = saldo * taxa;
+      saldo = saldo + rendimento + aporte;
+    } else {
+      const baseAcumulada = capital + aporte * (p - 1);
+      rendimento = baseAcumulada * taxa;
+      saldo = saldo + rendimento + aporte;
+    }
+    linhas.push({ periodo: p, rendimento, saldo });
+  }
+
+  const ultima = linhas[linhas.length - 1];
+  const valorTotal = ultima ? ultima.saldo : capital;
+  const totalInvestido = capital + aporte * tempoCalculo;
+  const lucroTotal = valorTotal - totalInvestido;
+  const rendimentoUltimoPeriodo = ultima ? ultima.rendimento : 0;
+
+  document.getElementById('resultTipoLabel').textContent = tipo === 'composto' ? 'Juros compostos' : 'Juros simples';
+  document.getElementById('rValorTotal').textContent = brl(valorTotal);
+  document.getElementById('rLucroLabel').textContent = 'Rendimento do último ' + info.unidade;
+  document.getElementById('rLucroMensal').textContent = brl(rendimentoUltimoPeriodo);
+  const capitalPctDisp = valorTotal > 0 ? Math.round((totalInvestido / valorTotal) * 100) : 100;
+  const lucroPctDisp = valorTotal > 0 ? Math.round((lucroTotal / valorTotal) * 100) : 0;
+  document.getElementById('pieCapitalLabel').textContent = brl(totalInvestido) + ' (' + capitalPctDisp + '% do montante)';
+  document.getElementById('pieLucroLabel').textContent = brl(lucroTotal) + ' (' + lucroPctDisp + '% do montante)';
+
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4FD1C5';
+  const capitalPct = valorTotal > 0 ? (totalInvestido / valorTotal) * 100 : 100;
+  document.getElementById('pieChart').style.background =
+    `conic-gradient(${accent} 0% ${capitalPct}%, #F0997B ${capitalPct}% 100%)`;
+
+  const tbody = document.getElementById('financeTableBody');
+  tbody.innerHTML = '';
+  linhas.forEach(l => {
+    tbody.innerHTML += `<tr><td>${l.periodo}</td><td>${brl(l.rendimento)}</td><td>${brl(l.saldo)}</td></tr>`;
+  });
+  document.getElementById('financeResultCard').style.display = 'block';
+}
+
+/* ============================================================
+   GERADOR DE CURRÍCULO
+   ============================================================ */
+let workCount = 0;
+let eduCount = 0;
+
+function addWorkRow() {
+  workCount++;
+  const id = 'work' + workCount;
+  const div = document.createElement('div');
+  div.className = 'entry-row';
+  div.id = id;
+  div.innerHTML = `
+    <button class="entry-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+    <div class="grid-2">
+      <div class="field" style="margin-bottom:8px">
+        <label>Empresa / local</label>
+        <input type="text" class="workEmpresa" placeholder="Ex: Padaria Pão Quente">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Cargo</label>
+        <input type="text" class="workCargo" placeholder="Ex: Atendente">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label>Período</label>
+      <input type="text" class="workPeriodo" placeholder="Ex: 2022 - 2024">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Atividades realizadas</label>
+      <textarea class="workAtividades" rows="2" placeholder="Ex: Atendimento ao cliente, controle de caixa, organização do estoque"></textarea>
+    </div>`;
+  document.getElementById('workList').appendChild(div);
+}
+
+function addEduRow() {
+  eduCount++;
+  const id = 'edu' + eduCount;
+  const div = document.createElement('div');
+  div.className = 'entry-row';
+  div.id = id;
+  div.innerHTML = `
+    <button class="entry-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+    <div class="grid-2">
+      <div class="field" style="margin-bottom:8px">
+        <label>Curso</label>
+        <input type="text" class="eduCurso" placeholder="Ex: Técnico em Administração">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Instituição</label>
+        <input type="text" class="eduInstituicao" placeholder="Ex: Escola Estadual X">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Ano de conclusão</label>
+      <input type="text" class="eduAno" placeholder="Ex: 2023">
+    </div>`;
+  document.getElementById('eduList').appendChild(div);
+}
+
+function gerarCurriculo() {
+  const nome = document.getElementById('cvNome').value.trim() || 'Nome não informado';
+  const idade = document.getElementById('cvIdade').value.trim();
+  const cidade = document.getElementById('cvCidade').value.trim();
+  const estado = document.getElementById('cvEstado').value.trim();
+  const telefone = document.getElementById('cvTelefone').value.trim();
+  const email = document.getElementById('cvEmail').value.trim();
+  const linkedin = document.getElementById('cvLinkedin').value.trim();
+  const objetivo = document.getElementById('cvObjetivo').value.trim();
+  const habilidades = document.getElementById('cvHabilidades').value.trim();
+  const cor = document.getElementById('cvColor').value;
+  const fotoInput = document.getElementById('cvFoto');
+
+  document.getElementById('pvNome').textContent = nome;
+
+  const local = [cidade, estado].filter(Boolean).join(' - ');
+  document.getElementById('pvMeta').textContent = [idade ? `${idade} anos` : '', local].filter(Boolean).join(' · ');
+
+  const contatoPartes = [telefone, email, linkedin].filter(Boolean);
+  document.getElementById('pvContato').textContent = contatoPartes.join(' · ');
+
+  document.getElementById('resumePreview').style.setProperty('--cv-accent', cor);
+
+  const pvFoto = document.getElementById('pvFoto');
+  if (fotoInput.files && fotoInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pvFoto.src = e.target.result;
+      pvFoto.style.display = 'block';
+    };
+    reader.readAsDataURL(fotoInput.files[0]);
+  } else {
+    pvFoto.style.display = 'none';
+    pvFoto.src = '';
+  }
+
+  const objetivoWrap = document.getElementById('pvObjetivoWrap');
+  if (objetivo) {
+    document.getElementById('pvObjetivo').textContent = objetivo;
+    objetivoWrap.style.display = 'block';
+  } else {
+    objetivoWrap.style.display = 'none';
+  }
+
+  const habilidadesWrap = document.getElementById('pvHabilidadesWrap');
+  if (habilidades) {
+    document.getElementById('pvHabilidades').textContent = habilidades;
+    habilidadesWrap.style.display = 'block';
+  } else {
+    habilidadesWrap.style.display = 'none';
+  }
+
+  const workDiv = document.getElementById('pvWork');
+  workDiv.innerHTML = '';
+  document.querySelectorAll('#workList .entry-row').forEach(row => {
+    const empresa = row.querySelector('.workEmpresa').value.trim();
+    const cargo = row.querySelector('.workCargo').value.trim();
+    const periodo = row.querySelector('.workPeriodo').value.trim();
+    const atividades = row.querySelector('.workAtividades').value.trim();
+    if (empresa || cargo) {
+      workDiv.innerHTML += `<div class="cv-item">
+        <div class="cv-title">${cargo || 'Cargo'} — ${empresa || 'Empresa'}</div>
+        <div class="cv-sub">${periodo}</div>
+        ${atividades ? `<p class="cv-desc">${atividades}</p>` : ''}
+      </div>`;
+    }
+  });
+  if (!workDiv.innerHTML) workDiv.innerHTML = '<div class="cv-sub">Nenhuma experiência informada.</div>';
+
+  const eduDiv = document.getElementById('pvEdu');
+  eduDiv.innerHTML = '';
+  document.querySelectorAll('#eduList .entry-row').forEach(row => {
+    const curso = row.querySelector('.eduCurso').value.trim();
+    const inst = row.querySelector('.eduInstituicao').value.trim();
+    const ano = row.querySelector('.eduAno').value.trim();
+    if (curso || inst) {
+      eduDiv.innerHTML += `<div class="cv-item">
+        <div class="cv-title">${curso || 'Curso'}</div>
+        <div class="cv-sub">${inst}${ano ? ' · ' + ano : ''}</div>
+      </div>`;
+    }
+  });
+  if (!eduDiv.innerHTML) eduDiv.innerHTML = '<div class="cv-sub">Nenhuma formação informada.</div>';
+
+  document.getElementById('resumePreview').style.display = 'block';
+  document.getElementById('printBtn').classList.remove('hidden');
+}
+
+/* ============================================================
+   GERADOR DE TREINO
+   ============================================================ */
+const POOL = {
+  peito: ['Supino reto - 4x10', 'Supino inclinado com halteres - 3x12', 'Crucifixo - 3x12', 'Flexão de braço - 3x15'],
+  costas: ['Puxada na frente - 4x10', 'Remada baixa - 3x12', 'Remada curvada - 3x10'],
+  perna: ['Agachamento livre - 4x10', 'Leg press - 4x12', 'Cadeira extensora - 3x15', 'Cadeira flexora - 3x15', 'Panturrilha em pé - 4x15'],
+  ombro: ['Desenvolvimento com halteres - 4x10', 'Elevação lateral - 3x15', 'Elevação frontal - 3x15'],
+  braco: ['Rosca direta - 3x12', 'Tríceps corda - 3x12', 'Rosca martelo - 3x12', 'Tríceps testa - 3x12'],
+  core: ['Prancha - 3x40s', 'Abdominal supra - 3x20', 'Elevação de pernas - 3x15'],
+  cardio: ['Corrida contínua - 25min', 'HIIT 20min (30s forte / 30s leve)', 'Bicicleta ergométrica - 20min'],
+  circuito: ['Burpee - 4x15', 'Polichinelo - 4x30s', 'Agachamento com salto - 4x15', 'Mountain climber - 4x30s'],
+  mobilidade: ['Alongamento de posterior de coxa - 3x30s', 'Mobilidade de quadril - 3x10 por lado', 'Alongamento de ombro - 3x30s', 'Respiração diafragmática - 5min'],
+  forca_compostos: ['Agachamento livre - 5x5', 'Levantamento terra - 5x5', 'Supino reto - 5x5', 'Desenvolvimento militar - 5x5', 'Remada curvada - 5x5']
+};
+
+/* Cada objetivo contribui com uma "fila" de tipos de dia de treino */
+const GOAL_TEMPLATES = {
+  hipertrofia: ['Peito e tríceps', 'Costas e bíceps', 'Pernas', 'Ombro e core', 'Braço e core'],
+  forca: ['Treino de força A', 'Treino de força B', 'Treino de força C'],
+  emagrecimento: ['Cardio + HIIT', 'Circuito metabólico'],
+  resistencia: ['Cardio contínuo', 'Circuito de resistência'],
+  mobilidade: ['Mobilidade e alongamento']
+};
+const GOAL_NAMES = {
+  hipertrofia: 'Hipertrofia', forca: 'Força', emagrecimento: 'Emagrecimento',
+  resistencia: 'Resistência', mobilidade: 'Mobilidade'
+};
+
+/* Descobre a lista de exercícios olhando só pro texto do rótulo do dia (funciona pra qualquer combinação de objetivos) */
+function exercisesForLabel(label) {
+  const l = normalize(label);
+  let list = [];
+
+  if (l.includes('forca')) return POOL.forca_compostos;
+  if (l.includes('cardio') || l.includes('hiit')) return POOL.cardio;
+  if (l.includes('circuito') || l.includes('metabolico')) return POOL.circuito;
+  if (l.includes('mobilidade') || l.includes('alongamento')) return POOL.mobilidade;
+
+  if (l.includes('corpo inteiro')) {
+    list = [POOL.peito[0], POOL.costas[0], POOL.perna[0], POOL.perna[1], POOL.ombro[0]];
+  } else {
+    if (l.includes('peito')) list.push(...POOL.peito);
+    if (l.includes('costas')) list.push(...POOL.costas);
+    if (l.includes('perna')) list.push(...POOL.perna);
+    if (l.includes('ombro')) list.push(...POOL.ombro);
+    if (l.includes('braco') || l.includes('triceps') || l.includes('biceps')) list.push(...POOL.braco);
+    if (l.includes('superior')) list.push(...POOL.peito, ...POOL.costas, ...POOL.ombro);
+    if (l.includes('inferior')) list.push(...POOL.perna);
+    if (l.includes('core')) list.push(...POOL.core);
+  }
+  return [...new Set(list)].slice(0, 6);
+}
+
+/* Monta os rótulos dos dias de treino combinando, em rodízio, os objetivos escolhidos */
+function buildDayLabels(goals, dias) {
+  if (goals.length === 1 && goals[0] === 'hipertrofia') {
+    const map = {
+      1: ['Corpo inteiro'],
+      2: ['Superior', 'Inferior'],
+      3: ['Peito e tríceps', 'Costas e bíceps', 'Pernas e ombro']
+    };
+    if (map[dias]) return map[dias];
+  }
+
+  const filas = goals.map(g => [...GOAL_TEMPLATES[g]]);
+  const labels = [];
+  let gi = 0;
+  while (labels.length < dias) {
+    const idx = gi % goals.length;
+    if (filas[idx].length === 0) filas[idx] = [...GOAL_TEMPLATES[goals[idx]]];
+    labels.push(filas[idx].shift());
+    gi++;
+  }
+  return labels;
+}
+
+function distributeDays(numDias) {
+  const flags = [false, false, false, false, false, false, false];
+  for (let i = 0; i < numDias; i++) {
+    const idx = Math.min(6, Math.round((i * 7) / numDias));
+    flags[idx] = true;
+  }
+  return flags;
+}
+
+function gerarTreino() {
+  const goals = Array.from(document.querySelectorAll('.goal-check:checked')).map(el => el.value);
+  let dias = parseInt(document.getElementById('wDias').value) || 3;
+  dias = Math.max(1, Math.min(7, dias));
+
+  if (goals.length === 0) {
+    document.getElementById('detectedGoalTag').textContent = 'Selecione pelo menos um objetivo para gerar o treino.';
+    document.getElementById('workoutResultCard').style.display = 'block';
+    document.getElementById('weekGrid').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('detectedGoalTag').textContent = 'Objetivo' + (goals.length > 1 ? 's combinados: ' : ': ') +
+    goals.map(g => GOAL_NAMES[g]).join(' + ');
+
+  const dayLabels = buildDayLabels(goals, dias);
+  const trainFlags = distributeDays(dias);
+  const weekNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+  let trainIndex = 0;
+  weekNames.forEach((dayName, i) => {
+    const isTrain = trainFlags[i];
+    const card = document.createElement('div');
+    card.className = 'day-card' + (isTrain ? '' : ' rest');
+    if (isTrain) {
+      const label = dayLabels[trainIndex % dayLabels.length];
+      const exs = exercisesForLabel(label);
+      card.innerHTML = `<div class="day-name">${dayName}</div>
+        <div class="day-focus">${label}</div>
+        <ul>${exs.map(e => `<li>${e}</li>`).join('')}</ul>`;
+      trainIndex++;
+    } else {
+      card.innerHTML = `<div class="day-name">${dayName}</div><div class="day-focus">Descanso</div>`;
+    }
+    grid.appendChild(card);
+  });
+
+  document.getElementById('workoutResultCard').style.display = 'block';
+}
+
+/* Inicializa com uma linha de exemplo em cada lista */
+atualizarRotulosPeriodo();
+addWorkRow();
+addEduRow();
+
+/* ============================================================
+   CONFIGURAÇÕES DE APARÊNCIA
+   ============================================================ */
+const DEFAULT_THEME = { bg: '#10151c', panel: '#1a2230', text: '#e7ecf3', accent: '#4fd1c5', bgImage: null, panelImage: null, accentImage: null };
+
+function fileToDataUrl(file) {
+  return new Promise((resolve) => {
+    if (!file) { resolve(null); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function applySettings() {
+  const bg = document.getElementById('setBg').value;
+  const panel = document.getElementById('setPanel').value;
+  const text = document.getElementById('setText').value;
+  const accent = document.getElementById('setAccent').value;
+
+  const bgFile = document.getElementById('setBgImage').files[0];
+  const panelFile = document.getElementById('setPanelImage').files[0];
+  const accentFile = document.getElementById('setAccentImage').files[0];
+  const [bgImgNovo, panelImgNovo, accentImgNovo] = await Promise.all([
+    fileToDataUrl(bgFile), fileToDataUrl(panelFile), fileToDataUrl(accentFile)
+  ]);
+
+  /* mantém imagem já salva se o campo de arquivo não foi tocado dessa vez */
+  let prev = {};
+  if (currentUser) {
+    try { prev = JSON.parse(localStorage.getItem('theme_' + currentUser)) || {}; } catch (e) { prev = {}; }
+  }
+  const theme = {
+    bg, panel, text, accent,
+    bgImage: bgImgNovo || prev.bgImage || null,
+    panelImage: panelImgNovo || prev.panelImage || null,
+    accentImage: accentImgNovo || prev.accentImage || null
+  };
+
+  aplicarTemaNaTela(theme);
+
+  if (currentUser) {
+    try { localStorage.setItem('theme_' + currentUser, JSON.stringify(theme)); }
+    catch (e) { /* imagem grande demais pro localStorage — cores ainda funcionam */ }
+  }
+}
+
+function aplicarTemaNaTela(theme) {
+  const root = document.documentElement.style;
+  root.setProperty('--bg', theme.bg);
+  root.setProperty('--panel', theme.panel);
+  root.setProperty('--text', theme.text);
+  root.setProperty('--accent', theme.accent);
+  root.setProperty('--bg-image', theme.bgImage ? `url(${theme.bgImage})` : 'none');
+  root.setProperty('--panel-image', theme.panelImage ? `url(${theme.panelImage})` : 'none');
+  root.setProperty('--accent-image', theme.accentImage ? `url(${theme.accentImage})` : 'none');
+}
+
+function loadUserTheme(userLower) {
+  let theme = DEFAULT_THEME;
+  try {
+    const raw = localStorage.getItem('theme_' + userLower);
+    if (raw) theme = Object.assign({}, DEFAULT_THEME, JSON.parse(raw));
+  } catch (e) { /* mantém padrão */ }
+
+  document.getElementById('setBg').value = theme.bg;
+  document.getElementById('setPanel').value = theme.panel;
+  document.getElementById('setText').value = theme.text;
+  document.getElementById('setAccent').value = theme.accent;
+  document.getElementById('setBgImage').value = '';
+  document.getElementById('setPanelImage').value = '';
+  document.getElementById('setAccentImage').value = '';
+
+  aplicarTemaNaTela(theme);
+}
+
+function resetSettings() {
+  document.getElementById('setBg').value = DEFAULT_THEME.bg;
+  document.getElementById('setPanel').value = DEFAULT_THEME.panel;
+  document.getElementById('setText').value = DEFAULT_THEME.text;
+  document.getElementById('setAccent').value = DEFAULT_THEME.accent;
+  document.getElementById('setBgImage').value = '';
+  document.getElementById('setPanelImage').value = '';
+  document.getElementById('setAccentImage').value = '';
+
+  aplicarTemaNaTela(DEFAULT_THEME);
+  if (currentUser) {
+    try { localStorage.setItem('theme_' + currentUser, JSON.stringify(DEFAULT_THEME)); } catch (e) {}
+  }
+}
+
+/* ============================================================
+   CALCULADORA FLUTUANTE
+   ============================================================ */
+let calcCurrent = '0', calcPrevious = null, calcOperator = null, calcResetNext = false, calcShowingResult = false;
+
+function calcUpdateDisplay() {
+  const display = document.getElementById('calcDisplay');
+  let text;
+  if (calcShowingResult || calcOperator === null) {
+    /* só mostra o resultado (ou o número sendo digitado, sem operação pendente) */
+    text = calcCurrent;
+  } else {
+    /* mostra a operação completa enquanto ela está sendo montada */
+    text = String(calcPrevious) + ' ' + calcOperator + ' ' + (calcResetNext ? '' : calcCurrent);
+  }
+  display.textContent = text;
+  display.scrollLeft = display.scrollWidth;
+}
+function calcInputDigit(d) {
+  if (calcResetNext) { calcCurrent = '0'; calcResetNext = false; }
+  calcShowingResult = false;
+  if (d === '.' && calcCurrent.includes('.')) return;
+  calcCurrent = (calcCurrent === '0' && d !== '.') ? d : calcCurrent + d;
+  calcUpdateDisplay();
+}
+function calcSetOperator(op) {
+  if (calcOperator && !calcResetNext) calcEquals();
+  calcPrevious = parseFloat(calcCurrent);
+  calcOperator = op;
+  calcResetNext = true;
+  calcShowingResult = false;
+  calcUpdateDisplay();
+}
+function calcEquals() {
+  if (calcOperator === null || calcPrevious === null) return;
+  const cur = parseFloat(calcCurrent);
+  let result = cur;
+  switch (calcOperator) {
+    case '+': result = calcPrevious + cur; break;
+    case '-': result = calcPrevious - cur; break;
+    case '*': result = calcPrevious * cur; break;
+    case '/': result = cur === 0 ? 0 : calcPrevious / cur; break;
+  }
+  calcCurrent = String(Math.round(result * 1e8) / 1e8);
+  calcOperator = null; calcPrevious = null; calcResetNext = true;
+  calcShowingResult = true;
+  calcUpdateDisplay();
+}
+function calcClear() {
+  calcCurrent = '0'; calcPrevious = null; calcOperator = null; calcResetNext = false; calcShowingResult = false;
+  calcUpdateDisplay();
+}
+function buildCalcButtons() {
+  const layout = ['7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '=', '+', 'C'];
+  const container = document.getElementById('calcButtons');
+  layout.forEach(key => {
+    const btn = document.createElement('button');
+    btn.textContent = key;
+    btn.style.cssText = 'padding:10px 0; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; cursor:pointer;';
+    if (key === 'C') btn.style.gridColumn = 'span 4';
+    btn.onclick = () => {
+      if (key === '.' || !isNaN(key)) calcInputDigit(key);
+      else if (key === '=') calcEquals();
+      else if (key === 'C') calcClear();
+      else calcSetOperator(key);
+    };
+    container.appendChild(btn);
+  });
+  calcUpdateDisplay();
+}
+buildCalcButtons();
+
+function toggleCalc() {
+  document.getElementById('calcWidget').classList.toggle('hidden');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'F9') {
+    e.preventDefault();
+    toggleCalc();
+  }
+});
+
+/* arrastar a calculadora pelo cabeçalho (só no PC via mouse — travado no celular para não mover a tela) */
+(function makeCalcDraggable() {
+  const widget = document.getElementById('calcWidget');
+  const header = document.getElementById('calcHeader');
+  let isDown = false, offsetX = 0, offsetY = 0;
+  header.addEventListener('mousedown', (e) => {
+    isDown = true;
+    const rect = widget.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const w = widget.offsetWidth, h = widget.offsetHeight;
+    let left = e.clientX - offsetX;
+    let top = e.clientY - offsetY;
+    left = Math.max(0, Math.min(window.innerWidth - w, left));
+    top = Math.max(0, Math.min(window.innerHeight - h, top));
+    widget.style.left = left + 'px';
+    widget.style.top = top + 'px';
+  });
+  document.addEventListener('mouseup', () => { isDown = false; });
+})();
+
+/* ============================================================
+   JOGOS — estrutura geral (abrir, sair, pausar com ESC)
+   ============================================================ */
+let currentGame = null;
+
+function openGame(name) {
+  currentGame = name;
+  document.getElementById('gamesGrid').classList.add('hidden');
+  document.getElementById('gameContainer').classList.remove('hidden');
+  document.querySelectorAll('#gameContainer > div').forEach(d => d.classList.add('hidden'));
+  document.getElementById(name + 'Game').classList.remove('hidden');
+  document.getElementById('gameMobileMenuBtn').classList.remove('hidden');
+
+  if (name === 'blackjack') {
+    document.getElementById('bjTables').classList.remove('hidden');
+    document.getElementById('bjPlay').classList.add('hidden');
+    renderBjHome();
+  }
+  if (name === 'minesweeper') msInit();
+  if (name === 'flags') flagsInit();
+  if (name === 'blockblast') bbInit();
+  if (name === 'solitaire') solInit();
+  if (name === 'roleta') rlInit();
+}
+
+function exitGame() {
+  currentGame = null;
+  document.getElementById('gameContainer').classList.add('hidden');
+  document.getElementById('gamesGrid').classList.remove('hidden');
+  document.getElementById('gamePauseMenu').classList.add('hidden');
+  document.getElementById('gameMobileMenuBtn').classList.add('hidden');
+}
+
+function closePauseMenu() {
+  document.getElementById('gamePauseMenu').classList.add('hidden');
+}
+
+function toggleGamePause() {
+  if (!currentGame) return;
+  document.getElementById('gamePauseMenu').classList.toggle('hidden');
+}
+
+function changeGameBg(color) {
+  document.documentElement.style.setProperty('--bg', color);
+  document.documentElement.style.setProperty('--bg-image', 'none');
+  if (currentUser) {
+    try {
+      const raw = localStorage.getItem('theme_' + currentUser);
+      const theme = raw ? Object.assign({}, DEFAULT_THEME, JSON.parse(raw)) : Object.assign({}, DEFAULT_THEME);
+      theme.bg = color;
+      theme.bgImage = null;
+      localStorage.setItem('theme_' + currentUser, JSON.stringify(theme));
+      document.getElementById('setBg').value = color;
+    } catch (e) {}
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  /* no PC o ESC continua abrindo/fechando o menu de pausa; no celular usa o botão ☰ */
+  if (e.key === 'Escape' && currentGame) {
+    toggleGamePause();
+  }
+});
+
+/* ============================================================
+   BLACKJACK
+   ============================================================ */
+const BJ_TABLES = [100, 250, 1000, 5000, 25000, 100000];
+const BJ_MAX_ROUNDS = 3;
+let bjDeck = [], bjPlayerHand = [], bjDealerHand = [], bjBet = 0, bjGameOver = false;
+let bjRoundsPlayed = 0, bjPlayerWins = 0, bjDealerWins = 0;
+
+function bjCoinsKey() { return 'coins_' + currentUser; }
+function bjClaimKey() { return 'lastClaim_' + currentUser; }
+
+function getCoins() {
+  const v = localStorage.getItem(bjCoinsKey());
+  if (v === null) { setCoins(500); return 500; }
+  return parseInt(v, 10) || 0;
+}
+function setCoins(n) {
+  try { localStorage.setItem(bjCoinsKey(), String(Math.max(0, Math.round(n)))); } catch (e) {}
+}
+function isSpecialUser() {
+  return currentUser === 'g' || currentUser === 'd';
+}
+
+function claimDailyCoins() {
+  const today = new Date().toISOString().slice(0, 10);
+  const last = localStorage.getItem(bjClaimKey());
+  if (last === today) { renderBjHome(); return; }
+  setCoins(getCoins() + 200);
+  try { localStorage.setItem(bjClaimKey(), today); } catch (e) {}
+  renderBjHome();
+}
+
+function renderBjHome() {
+  document.getElementById('bjCoins').textContent = getCoins().toLocaleString('pt-BR');
+  const today = new Date().toISOString().slice(0, 10);
+  const claimed = localStorage.getItem(bjClaimKey()) === today;
+  document.getElementById('bjClaimBtn').disabled = claimed;
+  document.getElementById('bjClaimBtn').textContent = claimed ? 'Moedas de hoje já resgatadas' : 'Resgatar 200 moedas de hoje';
+  document.getElementById('bjSpecialNote').textContent = isSpecialUser()
+    ? 'Conta especial: você senta em qualquer mesa sem gastar moedas. Joga-se melhor de 3 rodadas; empate joga a rodada de novo.'
+    : 'Joga-se melhor de 3 rodadas por mesa. Quem vencer mais rodadas fica com o valor apostado. Empate joga a rodada de novo.';
+
+  const list = document.getElementById('bjTableList');
+  list.innerHTML = '';
+  const coins = getCoins();
+  BJ_TABLES.forEach(v => {
+    const canAfford = isSpecialUser() || coins >= v;
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    card.innerHTML = `<div class="day-name">Mesa</div><div class="day-focus">${v.toLocaleString('pt-BR')} moedas</div>
+      <button class="btn btn-primary" style="margin-top:10px; padding:8px; font-size:12px" ${canAfford ? '' : 'disabled'} onclick="bjSitDown(${v})">${isSpecialUser() ? 'Sentar (grátis)' : 'Sentar'}</button>`;
+    list.appendChild(card);
+  });
+}
+
+function bjSitDown(value) {
+  if (!isSpecialUser()) {
+    const coins = getCoins();
+    if (coins < value) return;
+    setCoins(coins - value);
+  }
+  bjBet = value;
+  bjRoundsPlayed = 0;
+  bjPlayerWins = 0;
+  bjDealerWins = 0;
+  bjStartRound();
+}
+
+function bjBackToTables() {
+  document.getElementById('bjPlay').classList.add('hidden');
+  document.getElementById('bjTables').classList.remove('hidden');
+  renderBjHome();
+}
+
+/* continua para a próxima rodada do mesmo confronto de 3, sem apostar de novo */
+function bjNextRound() {
+  bjStartRound();
+}
+
+/* começa um novo confronto de 3 rodadas na mesma mesa, apostando de novo */
+function bjPlayAgain() {
+  if (!isSpecialUser() && getCoins() < bjBet) {
+    bjBackToTables();
+    return;
+  }
+  bjSitDown(bjBet);
+}
+
+function bjNewDeck() {
+  const suits = ['♠', '♥', '♦', '♣'];
+  const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  const deck = [];
+  suits.forEach(s => ranks.forEach(r => deck.push({ r, s })));
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+function bjCardValue(card) {
+  if (card.r === 'A') return 11;
+  if (['J', 'Q', 'K'].includes(card.r)) return 10;
+  return parseInt(card.r, 10);
+}
+function bjHandScore(hand) {
+  let total = hand.reduce((s, c) => s + bjCardValue(c), 0);
+  let aces = hand.filter(c => c.r === 'A').length;
+  while (total > 21 && aces > 0) { total -= 10; aces--; }
+  return total;
+}
+function bjRenderCard(card, hidden) {
+  if (hidden) return `<div class="playing-card" style="background:#1e2733; color:#1e2733;">?</div>`;
+  const red = card.s === '♥' || card.s === '♦';
+  return `<div class="playing-card" style="color:${red ? '#d13c3c' : '#111'}">${card.r}${card.s}</div>`;
+}
+
+/* baralho visível ao lado da mesa — uma pilha de cartas viradas para baixo */
+let bjBusy = false;
+
+function bjRenderDeckStack() {
+  const stack = document.getElementById('bjDeckStack');
+  stack.innerHTML = '';
+  const n = Math.min(6, Math.max(1, Math.ceil(bjDeck.length / 9)));
+  for (let i = 0; i < n; i++) {
+    const card = document.createElement('div');
+    card.className = 'playing-card';
+    card.style.cssText = `position:absolute; top:${-i * 2}px; left:${i * 2}px; background:#1e2733; color:#1e2733; box-shadow:0 2px 6px rgba(0,0,0,0.5); cursor:${(bjGameOver || bjBusy) ? 'default' : 'pointer'};`;
+    stack.appendChild(card);
+  }
+  stack.onclick = () => bjHit();
+}
+
+/* anima uma carta saindo do baralho, indo até a mão e depois virando pra revelar o valor */
+function bjAnimateDeal(targetElId, card, callback) {
+  const deckEl = document.getElementById('bjDeckStack');
+  const targetEl = document.getElementById(targetElId);
+  const deckRect = deckEl.getBoundingClientRect();
+
+  const existingCards = targetEl.querySelectorAll(':scope > .playing-card');
+  let destLeft, destTop;
+  if (existingCards.length > 0) {
+    const lastRect = existingCards[existingCards.length - 1].getBoundingClientRect();
+    destLeft = lastRect.right + 8;
+    destTop = lastRect.top;
+  } else {
+    const rect = targetEl.getBoundingClientRect();
+    destLeft = rect.left;
+    destTop = rect.top;
+  }
+
+  const flying = document.createElement('div');
+  flying.className = 'playing-card';
+  flying.style.cssText = `position:fixed; top:${deckRect.top}px; left:${deckRect.left}px; background:#1e2733; color:#1e2733; z-index:200; transition: top 0.4s cubic-bezier(.2,.75,.3,1), left 0.4s cubic-bezier(.2,.75,.3,1); transform:scaleX(1);`;
+  flying.textContent = '';
+  document.body.appendChild(flying);
+
+  /* etapa 1: voa do baralho até a mão, ainda virada pra baixo */
+  requestAnimationFrame(() => {
+    flying.style.top = destTop + 'px';
+    flying.style.left = destLeft + 'px';
+  });
+
+  setTimeout(() => {
+    /* etapa 2: vira a carta no lugar, revelando o valor no meio do giro */
+    flying.style.transition = 'transform 0.22s ease';
+    flying.style.transform = 'scaleX(0)';
+    setTimeout(() => {
+      const red = card.s === '♥' || card.s === '♦';
+      flying.style.background = '#fff';
+      flying.style.color = red ? '#d13c3c' : '#111';
+      flying.textContent = card.r + card.s;
+      flying.style.transform = 'scaleX(1)';
+      setTimeout(() => {
+        flying.remove();
+        callback();
+      }, 220);
+    }, 220);
+  }, 400);
+}
+
+function bjStartRound() {
+  bjDeck = bjNewDeck();
+  bjPlayerHand = [bjDeck.pop(), bjDeck.pop()];
+  bjDealerHand = [bjDeck.pop(), bjDeck.pop()];
+  bjGameOver = false;
+  bjBusy = false;
+  document.getElementById('bjTables').classList.add('hidden');
+  document.getElementById('bjPlay').classList.remove('hidden');
+  document.getElementById('bjTableValue').textContent = bjBet.toLocaleString('pt-BR');
+  document.getElementById('bjRoundInfo').textContent = Math.min(bjRoundsPlayed + 1, BJ_MAX_ROUNDS) + ' / ' + BJ_MAX_ROUNDS;
+  document.getElementById('bjPlayerWinsTxt').textContent = bjPlayerWins;
+  document.getElementById('bjDealerWinsTxt').textContent = bjDealerWins;
+  document.getElementById('bjResultMsg').textContent = '';
+  document.getElementById('bjNextRoundBtn').classList.add('hidden');
+  document.getElementById('bjPlayAgainBtn').classList.add('hidden');
+  document.getElementById('bjChangeTableBtn').classList.add('hidden');
+  document.getElementById('bjStandBtn').disabled = false;
+  bjRenderDeckStack();
+  bjRenderTable(true);
+
+  if (bjHandScore(bjPlayerHand) === 21) bjStand();
+}
+
+function bjRenderTable(hideDealer) {
+  document.getElementById('bjCoinsInGame').textContent = getCoins().toLocaleString('pt-BR');
+  document.getElementById('bjPlayerHand').innerHTML = bjPlayerHand.map(c => bjRenderCard(c, false)).join('');
+  document.getElementById('bjPlayerScore').textContent = '(' + bjHandScore(bjPlayerHand) + ')';
+  if (hideDealer) {
+    document.getElementById('bjDealerHand').innerHTML = bjRenderCard(bjDealerHand[0], false) + bjRenderCard(bjDealerHand[1], true);
+    document.getElementById('bjDealerScore').textContent = '';
+  } else {
+    document.getElementById('bjDealerHand').innerHTML = bjDealerHand.map(c => bjRenderCard(c, false)).join('');
+    document.getElementById('bjDealerScore').textContent = '(' + bjHandScore(bjDealerHand) + ')';
+  }
+  bjRenderDeckStack();
+}
+
+function bjHit() {
+  if (bjGameOver || bjBusy) return;
+  bjBusy = true;
+  document.getElementById('bjStandBtn').disabled = true;
+  bjRenderDeckStack();
+  const card = bjDeck.pop();
+  bjAnimateDeal('bjPlayerHand', card, () => {
+    bjPlayerHand.push(card);
+    const score = bjHandScore(bjPlayerHand);
+    bjBusy = false;
+    bjRenderTable(true);
+    if (score > 21) {
+      bjFinish('estourou');
+    } else {
+      document.getElementById('bjStandBtn').disabled = false;
+    }
+  });
+}
+
+function bjStand() {
+  if (bjGameOver || bjBusy) return;
+  bjBusy = true;
+  document.getElementById('bjStandBtn').disabled = true;
+  bjRenderTable(false);
+  bjDealerPlay();
+}
+
+function bjDealerPlay() {
+  if (bjHandScore(bjDealerHand) < 17) {
+    const card = bjDeck.pop();
+    bjAnimateDeal('bjDealerHand', card, () => {
+      bjDealerHand.push(card);
+      bjRenderTable(false);
+      bjDealerPlay();
+    });
+    return;
+  }
+  bjBusy = false;
+  bjRenderTable(false);
+  const p = bjHandScore(bjPlayerHand);
+  const d = bjHandScore(bjDealerHand);
+  if (p > 21) return bjFinish('estourou');
+  if (d > 21) return bjFinish('dealer_estourou');
+  if (p > d) return bjFinish('venceu');
+  if (p < d) return bjFinish('perdeu');
+  return bjFinish('empate');
+}
+
+function bjFinish(resultado) {
+  bjGameOver = true;
+  bjBusy = false;
+  document.getElementById('bjStandBtn').disabled = true;
+  bjRenderTable(false);
+
+  const venceu = resultado === 'venceu' || resultado === 'dealer_estourou';
+  const empatou = resultado === 'empate';
+  const msgEl = document.getElementById('bjResultMsg');
+
+  /* empate não conta como rodada — joga essa rodada de novo até decidir */
+  if (empatou) {
+    msgEl.style.color = '#FBBF24';
+    msgEl.textContent = 'Empate! Jogando essa rodada de novo até decidir...';
+    document.getElementById('bjNextRoundBtn').classList.add('hidden');
+    document.getElementById('bjPlayAgainBtn').classList.add('hidden');
+    document.getElementById('bjChangeTableBtn').classList.remove('hidden');
+    setTimeout(bjStartRound, 1600);
+    return;
+  }
+
+  bjRoundsPlayed++;
+  if (venceu) bjPlayerWins++; else bjDealerWins++;
+  document.getElementById('bjPlayerWinsTxt').textContent = bjPlayerWins;
+  document.getElementById('bjDealerWinsTxt').textContent = bjDealerWins;
+
+  const confrontoAcabou = bjRoundsPlayed >= BJ_MAX_ROUNDS;
+
+  if (!confrontoAcabou) {
+    /* rodada decidida, mas o confronto de 3 continua */
+    msgEl.style.color = venceu ? '#4ADE80' : '#F87171';
+    msgEl.textContent = (venceu ? 'Você venceu essa rodada!' : 'Você perdeu essa rodada.') +
+      ' Placar: ' + bjPlayerWins + ' x ' + bjDealerWins + '.';
+    document.getElementById('bjNextRoundBtn').classList.remove('hidden');
+    document.getElementById('bjPlayAgainBtn').classList.add('hidden');
+    document.getElementById('bjChangeTableBtn').classList.remove('hidden');
+    return;
+  }
+
+  /* confronto de 3 rodadas encerrado — quem venceu mais fica com o valor da mesa */
+  document.getElementById('bjNextRoundBtn').classList.add('hidden');
+  document.getElementById('bjPlayAgainBtn').classList.remove('hidden');
+  document.getElementById('bjChangeTableBtn').classList.remove('hidden');
+
+  const jogadorGanhouMesa = bjPlayerWins > bjDealerWins;
+  let coins = getCoins();
+  let msg;
+  if (jogadorGanhouMesa) {
+    coins += isSpecialUser() ? bjBet * 2 : bjBet + bjBet * 0.325;
+    msg = `🎉 Você venceu o confronto (${bjPlayerWins} x ${bjDealerWins}) e ficou com o valor da mesa!`;
+  } else {
+    if (isSpecialUser()) coins += bjBet * 0.675;
+    msg = `Você perdeu o confronto (${bjPlayerWins} x ${bjDealerWins}). O dealer ficou com o valor da mesa.`;
+  }
+  setCoins(coins);
+  msgEl.style.color = jogadorGanhouMesa ? '#4ADE80' : '#F87171';
+  msgEl.textContent = msg;
+  document.getElementById('bjCoinsInGame').textContent = getCoins().toLocaleString('pt-BR');
+}
+
+/* ============================================================
+   CAMPO MINADO
+   ============================================================ */
+const MS_LEVELS = {
+  facil: { rows: 10, cols: 10 },
+  medio: { rows: 15, cols: 20 },
+  dificil: { rows: 25, cols: 30 },
+  impossivel: { rows: 45, cols: 50 }
+};
+let msGrid = [], msRows = 0, msCols = 0, msMineCount = 0, msRevealedCount = 0, msFlagCount = 0, msOver = false, msMinesPlaced = false;
+
+function msCurrentLevel() {
+  const el = document.querySelector('input[name="msLevel"]:checked');
+  return el ? el.value : 'facil';
+}
+
+function msInit() {
+  const cfg = MS_LEVELS[msCurrentLevel()];
+  msRows = cfg.rows; msCols = cfg.cols;
+  msMineCount = Math.round(msRows * msCols * 0.15);
+  msOver = false;
+  msMinesPlaced = false;
+  msRevealedCount = 0;
+  msFlagCount = 0;
+  msExplodedCell = null;
+  document.getElementById('msStatusMsg').textContent = '';
+
+  msGrid = [];
+  for (let r = 0; r < msRows; r++) {
+    const row = [];
+    for (let c = 0; c < msCols; c++) row.push({ mine: false, revealed: false, flagged: false, count: 0 });
+    msGrid.push(row);
+  }
+  document.getElementById('msMinesLeft').textContent = msMineCount;
+  msRenderBoard();
+}
+
+function msPlaceMines(excludeR, excludeC) {
+  let placed = 0;
+  while (placed < msMineCount) {
+    const r = Math.floor(Math.random() * msRows);
+    const c = Math.floor(Math.random() * msCols);
+    if (Math.abs(r - excludeR) <= 1 && Math.abs(c - excludeC) <= 1) continue;
+    if (!msGrid[r][c].mine) { msGrid[r][c].mine = true; placed++; }
+  }
+  for (let r = 0; r < msRows; r++) {
+    for (let c = 0; c < msCols; c++) {
+      if (msGrid[r][c].mine) continue;
+      let count = 0;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < msRows && nc >= 0 && nc < msCols && msGrid[nr][nc].mine) count++;
+      }
+      msGrid[r][c].count = count;
+    }
+  }
+  msMinesPlaced = true;
+}
+
+const MS_CELL_COLORS = ['', '#1a56ff', '#0a8f2c', '#e21e1e', '#5b0bb5', '#a30000', '#0097a7', '#111111', '#555555'];
+let msExplodedCell = null;
+
+function msCellSize() {
+  const wrap = document.getElementById('msBoardWrap');
+  const availWidth = (wrap.clientWidth || 900) - 24;
+  const availHeight = 480;
+  let size = Math.floor(Math.min(availWidth / msCols, availHeight / msRows));
+  return Math.max(8, Math.min(32, size));
+}
+
+function msRenderBoard() {
+  const board = document.getElementById('msBoard');
+  const size = msCellSize();
+  const fontSize = Math.max(7, Math.round(size * 0.5));
+  board.style.display = 'grid';
+  board.style.gridTemplateColumns = `repeat(${msCols}, ${size}px)`;
+  board.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  for (let r = 0; r < msRows; r++) {
+    for (let c = 0; c < msCols; c++) {
+      const cell = msGrid[r][c];
+      const div = document.createElement('div');
+      const light = (r + c) % 2 === 0;
+      div.style.cssText = `width:${size}px; height:${size}px; display:flex; align-items:center; justify-content:center; font-size:${fontSize}px; font-weight:900; cursor:pointer; user-select:none; box-sizing:border-box;`;
+      if (cell.revealed) {
+        div.style.background = light ? '#e6dfc8' : '#dcd3ab';
+        if (msExplodedCell && msExplodedCell[0] === r && msExplodedCell[1] === c) {
+          div.textContent = '💥';
+          div.style.background = '#c0392b';
+          div.classList.add('ms-explode');
+        } else if (cell.mine) {
+          div.textContent = '💣'; div.style.background = '#a33';
+        } else if (cell.count > 0) {
+          div.textContent = cell.count; div.style.color = MS_CELL_COLORS[cell.count];
+        }
+      } else {
+        div.style.background = light ? '#8bc34a' : '#7cb342';
+        if (cell.flagged) div.textContent = '🚩';
+      }
+      div.onclick = () => msReveal(r, c);
+      div.oncontextmenu = (e) => { e.preventDefault(); msFlag(r, c, div); };
+      frag.appendChild(div);
+    }
+  }
+  board.appendChild(frag);
+}
+
+function msReveal(r, c) {
+  if (msOver) return;
+  if (!msMinesPlaced) msPlaceMines(r, c);
+  const start = msGrid[r][c];
+  if (start.revealed || start.flagged) return;
+
+  const stack = [[r, c]];
+  while (stack.length) {
+    const [cr, cc] = stack.pop();
+    const cur = msGrid[cr][cc];
+    if (cur.revealed || cur.flagged) continue;
+    cur.revealed = true;
+    msRevealedCount++;
+    if (cur.mine) {
+      msOver = true;
+      msExplodedCell = [cr, cc];
+      for (let rr = 0; rr < msRows; rr++) for (let cc2 = 0; cc2 < msCols; cc2++) if (msGrid[rr][cc2].mine) msGrid[rr][cc2].revealed = true;
+      const status = document.getElementById('msStatusMsg');
+      status.textContent = '💥 Se fudeu!';
+      status.style.color = '#F87171';
+      msRenderBoard();
+      msTriggerExplosion();
+      return;
+    }
+    if (cur.count === 0) {
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = cr + dr, nc = cc + dc;
+        if (nr >= 0 && nr < msRows && nc >= 0 && nc < msCols) {
+          const nb = msGrid[nr][nc];
+          if (!nb.revealed && !nb.mine && !nb.flagged) stack.push([nr, nc]);
+        }
+      }
+    }
+  }
+  msRenderBoard();
+  const total = msRows * msCols;
+  if (msRevealedCount === total - msMineCount) {
+    msOver = true;
+    const status = document.getElementById('msStatusMsg');
+    status.style.color = '#4ADE80';
+    status.textContent = '🎉 Você venceu! Todas as casas seguras foram reveladas.';
+  }
+}
+
+function msFlag(r, c, cellEl) {
+  if (msOver) return;
+  const cell = msGrid[r][c];
+  if (cell.revealed) return;
+
+  if (cell.flagged) {
+    cellEl.classList.add('ms-flag-remove');
+    setTimeout(() => {
+      cell.flagged = false;
+      msFlagCount--;
+      document.getElementById('msMinesLeft').textContent = msMineCount - msFlagCount;
+      msRenderBoard();
+    }, 210);
+  } else {
+    cell.flagged = true;
+    msFlagCount++;
+    document.getElementById('msMinesLeft').textContent = msMineCount - msFlagCount;
+    msRenderBoard();
+    requestAnimationFrame(() => {
+      const cells = document.querySelectorAll('#msBoard > div');
+      const idx = r * msCols + c;
+      if (cells[idx]) cells[idx].classList.add('ms-flag-add');
+    });
+  }
+}
+
+/* explosão cobrindo a tela inteira do site quando pisa numa mina */
+function msTriggerExplosion() {
+  const overlay = document.getElementById('msExplosionOverlay');
+  const flash = document.getElementById('msExplosionFlash');
+  const text = document.getElementById('msExplosionText');
+  overlay.classList.remove('hidden');
+  flash.classList.remove('go');
+  text.classList.remove('go');
+  void flash.offsetWidth; /* força reflow pra poder reiniciar a animação */
+  void text.offsetWidth;
+  flash.classList.add('go');
+  text.classList.add('go');
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    flash.classList.remove('go');
+    text.classList.remove('go');
+  }, 1500);
+}
+
+/* ============================================================
+   BLOCK BLAST
+   ============================================================ */
+const BB_SIZE = 8;
+const BB_COLORS = ['#4FD1C5', '#F0997B', '#c98fd1', '#e0c060', '#60a5fa', '#f472b6', '#7fd17f'];
+const BB_SHAPES = [
+  [[0,0]],
+  [[0,0],[0,1]],
+  [[0,0],[1,0]],
+  [[0,0],[0,1],[0,2]],
+  [[0,0],[1,0],[2,0]],
+  [[0,0],[0,1],[1,0],[1,1]],
+  [[0,0],[0,1],[0,2],[1,0]],
+  [[0,0],[0,1],[0,2],[1,2]],
+  [[0,0],[1,0],[1,1],[2,1]],
+  [[0,1],[1,0],[1,1],[2,1]],
+  [[0,0],[0,1],[0,2],[1,1]],
+  [[0,0],[1,0],[2,0],[2,1]],
+  [[0,0],[0,1],[1,0],[2,0]],
+  [[0,0],[0,1],[0,2],[0,3]],
+  [[0,0],[1,0],[2,0],[3,0]]
+];
+let bbBoard = [], bbScore = 0, bbTray = [], bbOver = false, bbDrag = null;
+
+function bbRandomPiece() {
+  const shape = BB_SHAPES[Math.floor(Math.random() * BB_SHAPES.length)];
+  const color = BB_COLORS[Math.floor(Math.random() * BB_COLORS.length)];
+  return { shape, color, used: false };
+}
+
+function bbInit() {
+  bbBoard = Array.from({ length: BB_SIZE }, () => Array(BB_SIZE).fill(null));
+  bbScore = 0;
+  bbOver = false;
+  bbDrag = null;
+  bbTray = [bbRandomPiece(), bbRandomPiece(), bbRandomPiece()];
+  document.getElementById('bbScore').textContent = '0';
+  document.getElementById('bbStatusMsg').textContent = '';
+  bbRenderBoard();
+  bbRenderTray();
+}
+
+function bbCellSize() {
+  return window.innerWidth < 480 ? 28 : 40;
+}
+
+function bbRenderBoard(ghost) {
+  const boardEl = document.getElementById('bbBoard');
+  const size = bbCellSize();
+  boardEl.style.display = 'grid';
+  boardEl.style.gridTemplateColumns = `repeat(${BB_SIZE}, ${size}px)`;
+  boardEl.style.gap = '2px';
+  boardEl.style.position = 'relative';
+  boardEl.innerHTML = '';
+  const frag = document.createDocumentFragment();
+
+  let ghostCells = [];
+  let ghostValid = false;
+  if (ghost) {
+    ghostValid = bbFits(ghost.piece, ghost.r, ghost.c);
+    ghostCells = ghost.piece.shape.map(([dr, dc]) => [ghost.r + dr, ghost.c + dc]);
+  }
+
+  for (let r = 0; r < BB_SIZE; r++) {
+    for (let c = 0; c < BB_SIZE; c++) {
+      const div = document.createElement('div');
+      const filled = bbBoard[r][c];
+      const isGhost = ghostCells.some(([gr, gc]) => gr === r && gc === c);
+      let bg = filled || '#161d29';
+      if (isGhost) bg = ghostValid ? 'rgba(79,209,197,0.6)' : 'rgba(248,113,113,0.6)';
+      div.style.cssText = `width:${size}px; height:${size}px; border-radius:4px; background:${bg}; border:1px solid #2a3444; box-sizing:border-box; transition:background 0.08s ease;`;
+      frag.appendChild(div);
+    }
+  }
+  boardEl.appendChild(frag);
+}
+
+function bbRenderTray() {
+  const tray = document.getElementById('bbTray');
+  tray.innerHTML = '';
+  bbTray.forEach((piece, idx) => {
+    const wrap = document.createElement('div');
+    const isDragging = bbDrag && bbDrag.idx === idx;
+    wrap.style.cssText = `padding:8px; border-radius:8px; cursor:${piece.used ? 'default' : 'grab'}; border:2px solid transparent; opacity:${piece.used || isDragging ? 0.25 : 1};`;
+    if (!piece.used) wrap.onmousedown = (e) => bbStartDrag(e, idx);
+    const maxR = Math.max(...piece.shape.map(p => p[0])) + 1;
+    const maxC = Math.max(...piece.shape.map(p => p[1])) + 1;
+    const mini = document.createElement('div');
+    mini.style.cssText = `display:grid; grid-template-columns:repeat(${maxC},14px); gap:2px; pointer-events:none;`;
+    for (let r = 0; r < maxR; r++) {
+      for (let c = 0; c < maxC; c++) {
+        const has = piece.shape.some(p => p[0] === r && p[1] === c);
+        const cell = document.createElement('div');
+        cell.style.cssText = `width:14px; height:14px; border-radius:2px; background:${has ? piece.color : 'transparent'};`;
+        mini.appendChild(cell);
+      }
+    }
+    wrap.appendChild(mini);
+    tray.appendChild(wrap);
+  });
+}
+
+function bbFits(piece, r, c) {
+  return piece.shape.every(([dr, dc]) => {
+    const nr = r + dr, nc = c + dc;
+    return nr >= 0 && nr < BB_SIZE && nc >= 0 && nc < BB_SIZE && !bbBoard[nr][nc];
+  });
+}
+
+function bbBoardCellFromPoint(x, y) {
+  const boardEl = document.getElementById('bbBoard');
+  const rect = boardEl.getBoundingClientRect();
+  const size = bbCellSize();
+  const gap = 2;
+  const localX = x - rect.left;
+  const localY = y - rect.top;
+  const c = Math.floor(localX / (size + gap));
+  const r = Math.floor(localY / (size + gap));
+  if (r < 0 || r >= BB_SIZE || c < 0 || c >= BB_SIZE) return null;
+  return { r, c };
+}
+
+function bbStartDrag(e, idx) {
+  const piece = bbTray[idx];
+  if (!piece || piece.used || bbOver) return;
+  e.preventDefault();
+  const size = bbCellSize();
+
+  const floatEl = document.createElement('div');
+  floatEl.style.cssText = `position:fixed; pointer-events:none; z-index:300; left:0; top:0;`;
+  piece.shape.forEach(([dr, dc]) => {
+    const cell = document.createElement('div');
+    cell.style.cssText = `position:absolute; width:${size}px; height:${size}px; left:${dc * (size + 2)}px; top:${dr * (size + 2)}px; background:${piece.color}; border-radius:4px; box-shadow:0 6px 14px rgba(0,0,0,0.45);`;
+    floatEl.appendChild(cell);
+  });
+  document.body.appendChild(floatEl);
+
+  bbDrag = { idx, piece, floatEl, size };
+  bbUpdateDragPos(e.clientX, e.clientY);
+  bbRenderTray();
+
+  document.addEventListener('mousemove', bbDragMove);
+  document.addEventListener('mouseup', bbDragEnd);
+}
+
+function bbUpdateDragPos(x, y) {
+  if (!bbDrag) return;
+  const size = bbDrag.size;
+  bbDrag.floatEl.style.left = (x - size / 2) + 'px';
+  bbDrag.floatEl.style.top = (y - size / 2) + 'px';
+}
+
+function bbDragMove(e) {
+  if (!bbDrag) return;
+  bbUpdateDragPos(e.clientX, e.clientY);
+  const cell = bbBoardCellFromPoint(e.clientX, e.clientY);
+  bbRenderBoard(cell ? { piece: bbDrag.piece, r: cell.r, c: cell.c } : null);
+}
+
+function bbDragEnd(e) {
+  if (!bbDrag) return;
+  document.removeEventListener('mousemove', bbDragMove);
+  document.removeEventListener('mouseup', bbDragEnd);
+  const cell = bbBoardCellFromPoint(e.clientX, e.clientY);
+  const idx = bbDrag.idx;
+  bbDrag.floatEl.remove();
+  bbDrag = null;
+
+  const piece = bbTray[idx];
+  if (cell && piece && !piece.used && bbFits(piece, cell.r, cell.c)) {
+    piece.shape.forEach(([dr, dc]) => { bbBoard[cell.r + dr][cell.c + dc] = piece.color; });
+    piece.used = true;
+    bbRenderBoard();
+    bbClearLines();
+    bbRenderTray();
+    if (bbTray.every(p => p.used)) {
+      bbTray = [bbRandomPiece(), bbRandomPiece(), bbRandomPiece()];
+      bbRenderTray();
+    }
+    bbCheckGameOver();
+  } else {
+    bbRenderBoard();
+    bbRenderTray();
+  }
+}
+
+function bbClearLines() {
+  const fullRows = [];
+  const fullCols = [];
+  for (let r = 0; r < BB_SIZE; r++) if (bbBoard[r].every(v => v)) fullRows.push(r);
+  for (let c = 0; c < BB_SIZE; c++) if (bbBoard.every(row => row[c])) fullCols.push(c);
+  if (!fullRows.length && !fullCols.length) return;
+  fullRows.forEach(r => { for (let c = 0; c < BB_SIZE; c++) bbBoard[r][c] = null; });
+  fullCols.forEach(c => { for (let r = 0; r < BB_SIZE; r++) bbBoard[r][c] = null; });
+  bbRenderBoard();
+  const lines = fullRows.length + fullCols.length;
+  let bonus = 0;
+  for (let i = 0; i < lines; i++) bonus += Math.floor(Math.random() * 16) + 10; /* 10 a 25 por linha — pontuação aleatória, sem exagero */
+  bbScore += bonus;
+  document.getElementById('bbScore').textContent = bbScore.toLocaleString('pt-BR');
+  const status = document.getElementById('bbStatusMsg');
+  status.style.color = '#4ADE80';
+  status.textContent = `+${bonus} pontos!`;
+  setTimeout(() => { if (!bbOver) status.textContent = ''; }, 1200);
+}
+
+function bbCheckGameOver() {
+  const active = bbTray.filter(p => !p.used);
+  if (!active.length) return;
+  const canPlaceAny = active.some(piece => {
+    for (let r = 0; r < BB_SIZE; r++) for (let c = 0; c < BB_SIZE; c++) if (bbFits(piece, r, c)) return true;
+    return false;
+  });
+  if (!canPlaceAny) {
+    bbOver = true;
+    const status = document.getElementById('bbStatusMsg');
+    status.style.color = '#F87171';
+    status.textContent = `Fim de jogo! Nenhuma peça cabe mais. Pontuação final: ${bbScore.toLocaleString('pt-BR')}`;
+  }
+}
+
+/* ============================================================
+   PACIÊNCIA
+   ============================================================ */
+const SOL_SUITS = ['♠', '♥', '♦', '♣'];
+let solStock = [], solWaste = [], solFoundations = [[], [], [], []], solTableau = [[], [], [], [], [], [], []];
+let solDrag = null; /* { cards, sourceType: 'waste'|'tableau', sourceCol, sourceIdx, floatEls } */
+
+function solNewDeck() {
+  const deck = [];
+  for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) deck.push({ r, s, faceUp: false });
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function solInit() {
+  const deck = solNewDeck();
+  solTableau = [[], [], [], [], [], [], []];
+  for (let c = 0; c < 7; c++) {
+    for (let i = 0; i <= c; i++) {
+      const card = deck.pop();
+      card.faceUp = (i === c);
+      solTableau[c].push(card);
+    }
+  }
+  solStock = deck;
+  solWaste = [];
+  solFoundations = [[], [], [], []];
+  solDrag = null;
+  document.getElementById('solStatusMsg').textContent = '';
+  solRender();
+}
+
+function solCardLabel(card) {
+  const ranks = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
+  return (ranks[card.r] || card.r) + SOL_SUITS[card.s];
+}
+function solIsRed(card) { return card.s === 1 || card.s === 2; }
+
+function solRender() {
+  const stockEl = document.getElementById('solStock');
+  stockEl.innerHTML = solStock.length ? '<div class="sol-card back" style="position:static;"></div>' : '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.4); font-size:11px;">↺</div>';
+
+  const wasteEl = document.getElementById('solWaste');
+  wasteEl.innerHTML = '';
+  const wasteHidden = solDrag && solDrag.sourceType === 'waste';
+  if (solWaste.length && !wasteHidden) {
+    const card = solWaste[solWaste.length - 1];
+    const div = document.createElement('div');
+    div.className = 'sol-card';
+    div.style.position = 'static';
+    div.style.color = solIsRed(card) ? '#d13c3c' : '#111';
+    div.textContent = solCardLabel(card);
+    div.onmousedown = (e) => solStartDrag(e, 'waste', null, null);
+    wasteEl.appendChild(div);
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('solFound' + i);
+    el.innerHTML = '';
+    const pile = solFoundations[i];
+    if (pile.length) {
+      const card = pile[pile.length - 1];
+      const div = document.createElement('div');
+      div.className = 'sol-card';
+      div.style.position = 'static';
+      div.style.color = solIsRed(card) ? '#d13c3c' : '#111';
+      div.textContent = solCardLabel(card);
+      el.appendChild(div);
+    } else {
+      el.innerHTML = `<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.3); font-size:14px;">${SOL_SUITS[i]}</div>`;
+    }
+  }
+
+  const tableauEl = document.getElementById('solTableau');
+  tableauEl.innerHTML = '';
+  solTableau.forEach((col, ci) => {
+    const colEl = document.createElement('div');
+    colEl.className = 'sol-col';
+    colEl.dataset.col = ci;
+    colEl.style.height = (84 + Math.max(0, col.length - 1) * 22 + 10) + 'px';
+    const draggingFromHere = solDrag && solDrag.sourceType === 'tableau' && solDrag.sourceCol === ci;
+    col.forEach((card, i) => {
+      if (draggingFromHere && i >= solDrag.sourceIdx) return; /* está "na mão" — não renderiza aqui */
+      const div = document.createElement('div');
+      div.className = 'sol-card' + (!card.faceUp ? ' back' : '');
+      div.style.top = (i * 22) + 'px';
+      if (card.faceUp) {
+        div.style.color = solIsRed(card) ? '#d13c3c' : '#111';
+        div.textContent = solCardLabel(card);
+        div.onmousedown = (e) => solStartDrag(e, 'tableau', ci, i);
+      }
+      colEl.appendChild(div);
+    });
+    tableauEl.appendChild(colEl);
+  });
+}
+
+function solDrawStock() {
+  if (solDrag) return;
+  if (solStock.length) {
+    const card = solStock.pop();
+    card.faceUp = true;
+    solWaste.push(card);
+  } else if (solWaste.length) {
+    solStock = solWaste.reverse().map(c => { c.faceUp = false; return c; });
+    solWaste = [];
+  }
+  solRender();
+}
+
+/* ---------- arrastar com o mouse ---------- */
+function solStartDrag(e, sourceType, sourceCol, sourceIdx) {
+  e.preventDefault();
+  e.stopPropagation();
+  let cards;
+  if (sourceType === 'waste') {
+    if (!solWaste.length) return;
+    cards = [solWaste[solWaste.length - 1]];
+  } else {
+    cards = solTableau[sourceCol].slice(sourceIdx);
+    if (!cards.length || !cards[0].faceUp) return;
+  }
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  const startLeft = rect.left, startTop = rect.top;
+
+  const floatEls = cards.map((card, i) => {
+    const div = document.createElement('div');
+    div.className = 'sol-card';
+    div.style.position = 'fixed';
+    div.style.left = startLeft + 'px';
+    div.style.top = (startTop + i * 22) + 'px';
+    div.style.zIndex = 300;
+    div.style.pointerEvents = 'none';
+    div.style.color = solIsRed(card) ? '#d13c3c' : '#111';
+    div.textContent = solCardLabel(card);
+    document.body.appendChild(div);
+    return div;
+  });
+
+  solDrag = {
+    cards, sourceType, sourceCol, sourceIdx, floatEls,
+    grabX: e.clientX, grabY: e.clientY, startLeft, startTop
+  };
+  solRender();
+
+  document.addEventListener('mousemove', solDragMove);
+  document.addEventListener('mouseup', solDragEnd);
+}
+
+function solDragMove(e) {
+  if (!solDrag) return;
+  const dx = e.clientX - solDrag.grabX;
+  const dy = e.clientY - solDrag.grabY;
+  solDrag.floatEls.forEach((el, i) => {
+    el.style.left = (solDrag.startLeft + dx) + 'px';
+    el.style.top = (solDrag.startTop + dy + i * 22) + 'px';
+  });
+}
+
+function solDragEnd(e) {
+  if (!solDrag) return;
+  document.removeEventListener('mousemove', solDragMove);
+  document.removeEventListener('mouseup', solDragEnd);
+
+  const dropEl = document.elementFromPoint(e.clientX, e.clientY);
+  const colEl = dropEl ? dropEl.closest('.sol-col') : null;
+  const foundEl = dropEl ? dropEl.closest('[data-found]') : null;
+
+  let moved = false;
+  if (colEl) {
+    moved = solTryMoveGroupToTableau(parseInt(colEl.dataset.col, 10));
+  } else if (foundEl) {
+    moved = solTryMoveGroupToFoundation(parseInt(foundEl.dataset.found, 10));
+  }
+
+  solDrag.floatEls.forEach(el => el.remove());
+  solDrag = null;
+  solRender();
+  if (moved) solCheckWin();
+}
+
+function solRemoveDragSource() {
+  if (solDrag.sourceType === 'waste') {
+    solWaste.pop();
+  } else {
+    solTableau[solDrag.sourceCol].splice(solDrag.sourceIdx);
+    const src = solTableau[solDrag.sourceCol];
+    if (src.length) src[src.length - 1].faceUp = true;
+  }
+}
+
+function solTryMoveGroupToTableau(destCi) {
+  const cards = solDrag.cards;
+  const leading = cards[0];
+  if (solDrag.sourceType === 'tableau' && solDrag.sourceCol === destCi) return false;
+  const destCol = solTableau[destCi];
+  const destTop = destCol.length ? destCol[destCol.length - 1] : null;
+  const valid = destTop
+    ? (destTop.faceUp && destTop.r === leading.r + 1 && solIsRed(destTop) !== solIsRed(leading))
+    : (leading.r === 13);
+  if (!valid) return false;
+  solRemoveDragSource();
+  cards.forEach(c => c.faceUp = true);
+  destCol.push(...cards);
+  return true;
+}
+
+function solTryMoveGroupToFoundation(fi) {
+  if (solDrag.cards.length !== 1) return false;
+  const card = solDrag.cards[0];
+  if (card.s !== fi) return false;
+  const pile = solFoundations[fi];
+  const need = pile.length ? pile[pile.length - 1].r + 1 : 1;
+  if (card.r !== need) return false;
+  solRemoveDragSource();
+  pile.push(card);
+  return true;
+}
+
+function solSetBg(color) {
+  document.getElementById('solTable').style.background = color;
+}
+
+function solCheckWin() {
+  const total = solFoundations.reduce((s, p) => s + p.length, 0);
+  if (total === 52) {
+    document.getElementById('solStatusMsg').style.color = '#4ADE80';
+    document.getElementById('solStatusMsg').textContent = '🎉 Você venceu!';
+  }
+}
+
+
+
+/* ============================================================
+   ROLETA DA SORTE — itens personalizados, gira quando quiser
+   ============================================================ */
+const RL_COLORS = ['#4FD1C5','#F87171','#FBBF24','#818CF8','#4ADE80','#F472B6','#38BDF8','#FB923C','#A78BFA','#34D399'];
+let rlItems = [];
+let rlRotation = 0;
+let rlSpinning = false;
+
+function rlKey() { return 'roleta_' + currentUser; }
+
+function rlLoad() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(rlKey()));
+    rlItems = Array.isArray(saved) ? saved : ['Sim', 'Não', 'Talvez'];
+  } catch (e) { rlItems = ['Sim', 'Não', 'Talvez']; }
+}
+function rlSave() {
+  try { localStorage.setItem(rlKey(), JSON.stringify(rlItems)); } catch (e) {}
+}
+
+function rlInit() {
+  rlLoad();
+  rlRotation = 0;
+  rlSpinning = false;
+  const wheel = document.getElementById('rlWheel');
+  wheel.style.transition = 'none';
+  wheel.style.transform = 'rotate(0deg)';
+  requestAnimationFrame(() => {
+    wheel.style.transition = 'transform 4s cubic-bezier(.15,.85,.25,1)';
+  });
+  document.getElementById('rlResultMsg').textContent = '';
+  document.getElementById('rlHighlight').style.opacity = '0';
+  rlRender();
+}
+
+function rlRender() {
+  const wheel = document.getElementById('rlWheel');
+  const list = document.getElementById('rlItemsList');
+  const n = rlItems.length;
+  wheel.innerHTML = '';
+  list.innerHTML = '';
+
+  if (n === 0) {
+    wheel.style.background = 'var(--panel)';
+    list.innerHTML = '<p class="sub">Adicione pelo menos 2 itens para poder girar.</p>';
+    document.getElementById('rlSpinBtn').disabled = true;
+    return;
+  }
+
+  const slice = 360 / n;
+  const gradientParts = rlItems.map((item, i) => {
+    const color = RL_COLORS[i % RL_COLORS.length];
+    return `${color} ${i * slice}deg ${(i + 1) * slice}deg`;
+  });
+  wheel.style.background = `conic-gradient(${gradientParts.join(',')})`;
+
+  rlItems.forEach((item, i) => {
+    const angle = i * slice + slice / 2;
+    const labelWrap = document.createElement('div');
+    labelWrap.style.cssText = `position:absolute; top:50%; left:50%; width:50%; height:0; transform-origin:0 0; transform: rotate(${angle - 90}deg);`;
+    const span = document.createElement('span');
+    span.textContent = item;
+    span.style.cssText = `position:absolute; left:18px; top:-8px; font-size:11px; font-weight:700; color:#1a1408; max-width:88px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;`;
+    labelWrap.appendChild(span);
+    wheel.appendChild(labelWrap);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px;';
+    row.innerHTML = `<span style="width:12px; height:12px; border-radius:50%; background:${RL_COLORS[i % RL_COLORS.length]}; flex-shrink:0;"></span>
+      <span style="flex:1; font-size:13px; word-break:break-word;"></span>
+      <span style="cursor:pointer; color:var(--muted); font-size:16px; padding:0 4px; line-height:1;">×</span>`;
+    row.querySelector('span:nth-child(2)').textContent = item;
+    row.querySelector('span:last-child').onclick = () => rlRemoveItem(i);
+    list.appendChild(row);
+  });
+
+  document.getElementById('rlSpinBtn').disabled = n < 2;
+}
+
+function rlAddItem() {
+  if (rlSpinning) return;
+  const input = document.getElementById('rlNewItem');
+  const val = input.value.trim();
+  if (!val) return;
+  rlItems.push(val);
+  input.value = '';
+  rlSave();
+  rlRender();
+  input.focus();
+}
+
+function rlRemoveItem(i) {
+  if (rlSpinning) return;
+  rlItems.splice(i, 1);
+  rlSave();
+  rlRender();
+}
+
+function rlClearItems() {
+  if (rlSpinning || !rlItems.length) return;
+  rlItems = [];
+  rlSave();
+  rlRender();
+}
+
+function rlSpin() {
+  const n = rlItems.length;
+  if (n < 2 || rlSpinning) return;
+  rlSpinning = true;
+  document.getElementById('rlSpinBtn').disabled = true;
+  document.getElementById('rlResultMsg').textContent = '';
+  document.getElementById('rlHighlight').style.opacity = '0';
+
+  /* trava os itens no momento do giro — assim, mesmo que a lista mude depois,
+     o resultado sorteado continua batendo com o que parou embaixo do ponteiro */
+  const items = rlItems.slice();
+  const slice = 360 / n;
+  const winnerIndex = Math.floor(Math.random() * n);
+  /* o ponteiro fica fixo no topo; giramos a roleta até o centro da fatia sorteada
+     parar embaixo dele, somando voltas extras pra dar efeito de suspense */
+  const targetCenter = winnerIndex * slice + slice / 2;
+  const currentMod = ((rlRotation % 360) + 360) % 360;
+  const neededMod = (360 - targetCenter) % 360;
+  const delta = (neededMod - currentMod + 360) % 360;
+  const extraSpins = 5 + Math.floor(Math.random() * 3);
+  rlRotation += extraSpins * 360 + delta;
+
+  document.getElementById('rlWheel').style.transform = `rotate(${rlRotation}deg)`;
+
+  setTimeout(() => {
+    rlSpinning = false;
+    document.getElementById('rlSpinBtn').disabled = false;
+
+    /* destaque fixo (não gira) marcando exatamente a fatia que ficou sob o ponteiro,
+       usando a mesma variável "slice" do sorteio — não tem como divergir do texto */
+    const highlight = document.getElementById('rlHighlight');
+    highlight.style.background =
+      `conic-gradient(from ${-slice / 2}deg, rgba(255,255,255,0.4) 0deg ${slice}deg, transparent ${slice}deg 360deg)`;
+    highlight.style.opacity = '1';
+
+    const msg = document.getElementById('rlResultMsg');
+    msg.style.color = 'var(--accent)';
+    msg.textContent = '🎉 Deu: ' + items[winnerIndex] + '!';
+  }, 4100);
+}
+
+/* ============================================================
+   ADIVINHE A BANDEIRA — 196 países (193 membros da ONU + Kosovo, Vaticano e Palestina)
+   ============================================================ */
+const COUNTRIES = [
+  ['Canadá','CA','América'],['Estados Unidos','US','América'],['México','MX','América'],
+  ['Guatemala','GT','América'],['Belize','BZ','América'],['Honduras','HN','América'],['El Salvador','SV','América'],['Nicarágua','NI','América'],['Costa Rica','CR','América'],['Panamá','PA','América'],
+  ['Cuba','CU','América'],['Haiti','HT','América'],['República Dominicana','DO','América'],['Jamaica','JM','América'],['Bahamas','BS','América'],['São Cristóvão','KN','América'],['Antígua e Barbuda','AG','América'],['Dominica','DM','América'],['Santa Lúcia','LC','América'],['São Vicente','VC','América'],['Granada','GD','América'],['Barbados','BB','América'],['Trindade e Tobago','TT','América'],
+  ['Colômbia','CO','América'],['Venezuela','VE','América'],['Guiana','GY','América'],['Suriname','SR','América'],['Equador','EC','América'],['Peru','PE','América'],['Brasil','BR','América'],['Bolívia','BO','América'],['Paraguai','PY','América'],['Chile','CL','América'],['Argentina','AR','América'],['Uruguai','UY','América'],
+
+  ['Argélia','DZ','África'],['Angola','AO','África'],['Benin','BJ','África'],['Botsuana','BW','África'],['Burkina Faso','BF','África'],['Burundi','BI','África'],['Cabo Verde','CV','África'],['Camarões','CM','África'],['Chade','TD','África'],['Comores','KM','África'],['Congo','CG','África'],['Congo','CD','África'],['Costa do Marfim','CI','África'],['Djibuti','DJ','África'],['Egito','EG','África'],['Eritreia','ER','África'],['Essuatíni','SZ','África'],['Etiópia','ET','África'],['Gabão','GA','África'],['Gâmbia','GM','África'],['Gana','GH','África'],['Guiné','GN','África'],['Guiné-Bissau','GW','África'],['Guiné Equatorial','GQ','África'],['Quênia','KE','África'],['Lesoto','LS','África'],['Libéria','LR','África'],['Líbia','LY','África'],['Madagascar','MG','África'],['Malawi','MW','África'],['Mali','ML','África'],['Marrocos','MA','África'],['Maurícia','MU','África'],['Mauritânia','MR','África'],['Moçambique','MZ','África'],['Namíbia','NA','África'],['Níger','NE','África'],['Nigéria','NG','África'],['Ruanda','RW','África'],['São Tomé','ST','África'],['Senegal','SN','África'],['Serra Leoa','SL','África'],['Seychelles','SC','África'],['Somália','SO','África'],['África do Sul','ZA','África'],['Sudão do Sul','SS','África'],['Sudão','SD','África'],['Tanzânia','TZ','África'],['Togo','TG','África'],['Tunísia','TN','África'],['Uganda','UG','África'],['Zâmbia','ZM','África'],['Zimbábue','ZW','África'],['República Centro Africana','CF','África'],
+
+  ['Afeganistão','AF','Ásia'],['Arábia Saudita','SA','Ásia'],['Armênia','AM','Ásia'],['Azerbaijão','AZ','Ásia'],['Bahrein','BH','Ásia'],['Bangladesh','BD','Ásia'],['Butão','BT','Ásia'],['Brunei','BN','Ásia'],['Camboja','KH','Ásia'],['Catar','QA','Ásia'],['Cazaquistão','KZ','Ásia'],['China','CN','Ásia'],['Chipre','CY','Ásia'],['Coreia do Norte','KP','Ásia'],['Coreia do Sul','KR','Ásia'],['Emirados Árabes Unidos','AE','Ásia'],['Filipinas','PH','Ásia'],['Geórgia','GE','Ásia'],['Índia','IN','Ásia'],['Indonésia','ID','Ásia'],['Irã','IR','Ásia'],['Iraque','IQ','Ásia'],['Israel','IL','Ásia'],['Japão','JP','Ásia'],['Jordânia','JO','Ásia'],['Kuwait','KW','Ásia'],['Laos','LA','Ásia'],['Líbano','LB','Ásia'],['Malásia','MY','Ásia'],['Maldivas','MV','Ásia'],['Mongólia','MN','Ásia'],['Myanmar','MM','Ásia'],['Nepal','NP','Ásia'],['Omã','OM','Ásia'],['Paquistão','PK','Ásia'],['Quirguistão','KG','Ásia'],['Singapura','SG','Ásia'],['Síria','SY','Ásia'],['Sri Lanka','LK','Ásia'],['Tailândia','TH','Ásia'],['Tajiquistão','TJ','Ásia'],['Timor-Leste','TL','Ásia'],['Turcomenistão','TM','Ásia'],['Turquia','TR','Ásia'],['Uzbequistão','UZ','Ásia'],['Vietnã','VN','Ásia'],['Iêmen','YE','Ásia'],['Palestina','PS','Ásia'],
+
+  ['Albânia','AL','Europa'],['Alemanha','DE','Europa'],['Andorra','AD','Europa'],['Áustria','AT','Europa'],['Bélgica','BE','Europa'],['Bielorrússia','BY','Europa'],['Bósnia e Herzegovina','BA','Europa'],['Bulgária','BG','Europa'],['Croácia','HR','Europa'],['Dinamarca','DK','Europa'],['Eslováquia','SK','Europa'],['Eslovênia','SI','Europa'],['Espanha','ES','Europa'],['Estônia','EE','Europa'],['Finlândia','FI','Europa'],['França','FR','Europa'],['Grécia','GR','Europa'],['Hungria','HU','Europa'],['Irlanda','IE','Europa'],['Islândia','IS','Europa'],['Itália','IT','Europa'],['Letônia','LV','Europa'],['Liechtenstein','LI','Europa'],['Lituânia','LT','Europa'],['Luxemburgo','LU','Europa'],['Macedônia do Norte','MK','Europa'],['Malta','MT','Europa'],['Moldávia','MD','Europa'],['Mônaco','MC','Europa'],['Montenegro','ME','Europa'],['Noruega','NO','Europa'],['Países Baixos','NL','Europa'],['Polônia','PL','Europa'],['Portugal','PT','Europa'],['Reino Unido','GB','Europa'],['República Tcheca','CZ','Europa'],['Romênia','RO','Europa'],['Rússia','RU','Europa'],['San Marino','SM','Europa'],['Sérvia','RS','Europa'],['Suécia','SE','Europa'],['Suíça','CH','Europa'],['Ucrânia','UA','Europa'],['Vaticano','VA','Europa'],['Kosovo','XK','Europa'],
+
+  ['Austrália','AU','Oceania'],['Nova Zelândia','NZ','Oceania'],['Papua-Nova Guiné','PG','Oceania'],['Fiji','FJ','Oceania'],['Ilhas Salomão','SB','Oceania'],['Vanuatu','VU','Oceania'],['Samoa','WS','Oceania'],['Kiribati','KI','Oceania'],['Tonga','TO','Oceania'],['Micronésia','FM','Oceania'],['Palau','PW','Oceania'],['Ilhas Marshall','MH','Oceania'],['Nauru','NR','Oceania'],['Tuvalu','TV','Oceania']
+];
+
+function flagImageUrl(code) {
+  return `https://flagcdn.com/w320/${code.toLowerCase()}.png`;
+}
+
+/* nomes alternativos aceitos como certos, além do nome principal do país */
+const FLAG_ALIASES = {
+  US: ['eua', 'estados unidos da america'],
+  GB: ['inglaterra', 'reino unido'],
+  CZ: ['tchequia', 'republica tcheca'],
+  AE: ['emirados arabes']
+};
+
+let flagsOrder = [], flagsIndex = 0, flagsAcertos = 0, flagsErros = 0, flagsPuladas = 0, flagsHintUsed = false;
+
+function flagsInit() {
+  flagsOrder = COUNTRIES.map((_, i) => i);
+  for (let i = flagsOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [flagsOrder[i], flagsOrder[j]] = [flagsOrder[j], flagsOrder[i]];
+  }
+  flagsIndex = 0; flagsAcertos = 0; flagsErros = 0; flagsPuladas = 0;
+  document.getElementById('flagsPlayCard').classList.remove('hidden');
+  document.getElementById('flagsSummaryCard').classList.add('hidden');
+  flagsShowCurrent();
+}
+
+function flagsCurrentCountry() {
+  return COUNTRIES[flagsOrder[flagsIndex]];
+}
+
+function flagsShowCurrent() {
+  flagsHintUsed = false;
+  document.getElementById('flagsHintText').textContent = '';
+  document.getElementById('flagsFeedback').textContent = '';
+  document.getElementById('flagsInput').value = '';
+  document.getElementById('flagsProgress').textContent = (flagsIndex + 1) + ' / ' + COUNTRIES.length;
+  const country = flagsCurrentCountry();
+  document.getElementById('flagsImg').src = flagImageUrl(country[1]);
+  flagsUpdateCounters();
+  document.getElementById('flagsInput').focus();
+}
+
+function flagsUpdateCounters() {
+  document.getElementById('flagsAcertos').textContent = flagsAcertos;
+  document.getElementById('flagsErros').textContent = flagsErros;
+  document.getElementById('flagsPuladas').textContent = flagsPuladas;
+}
+
+function flagsSubmit() {
+  const val = normalize(document.getElementById('flagsInput').value.trim());
+  if (!val) return;
+  const country = flagsCurrentCountry();
+  const correct = normalize(country[0]);
+  const aliases = (FLAG_ALIASES[country[1]] || []).map(normalize);
+  const feedback = document.getElementById('flagsFeedback');
+  if (val === correct || aliases.includes(val)) {
+    flagsAcertos++;
+    feedback.style.color = '#4ADE80';
+    feedback.textContent = 'Certo! Era ' + country[0] + '.';
+    flagsUpdateCounters();
+    setTimeout(flagsNext, 700);
+  } else {
+    /* errar a tentativa não conta como erro — só pular conta */
+    feedback.style.color = '#F87171';
+    feedback.textContent = 'Não é essa. Tente de novo, peça uma dica ou pule.';
+  }
+}
+
+function flagsHint() {
+  if (flagsHintUsed) return;
+  flagsHintUsed = true;
+  const country = flagsCurrentCountry();
+  document.getElementById('flagsHintText').textContent =
+    `Dica: começa com "${country[0].charAt(0).toUpperCase()}" e fica na ${country[2]}.`;
+}
+
+function flagsSkip() {
+  const country = flagsCurrentCountry();
+  flagsPuladas++;
+  flagsErros++;
+  flagsUpdateCounters();
+  const feedback = document.getElementById('flagsFeedback');
+  feedback.style.color = '#F87171';
+  feedback.textContent = 'Você errou! Era ' + country[0] + '.';
+  setTimeout(flagsNext, 1000);
+}
+
+function flagsNext() {
+  flagsIndex++;
+  if (flagsIndex >= COUNTRIES.length) { flagsShowSummary(); return; }
+  flagsShowCurrent();
+}
+
+function flagsShowSummary() {
+  document.getElementById('flagsPlayCard').classList.add('hidden');
+  document.getElementById('flagsSummaryCard').classList.remove('hidden');
+  document.getElementById('sumAcertos').textContent = flagsAcertos;
+  document.getElementById('sumErros').textContent = flagsErros;
+  document.getElementById('sumPuladas').textContent = flagsPuladas;
+  const pct = Math.round((flagsAcertos / COUNTRIES.length) * 100);
+  document.getElementById('sumPct').textContent = pct + '%';
+}
+
+/* ============================================================
+   TRILHA SONORA AMBIENTE — gerada com Web Audio API (sem arquivos
+   externos), toca em loop suave assim que o site é aberto.
+   Os navegadores bloqueiam som antes de qualquer interação do
+   usuário, então o áudio inicia no primeiro clique/tecla/toque.
+   ============================================================ */
+let musicCtx = null;
+let musicGain = null;
+let musicMuted = false;
+let musicStarted = false;
+let musicTimeoutId = null;
+
+/* progressão de acordes suave (em Hz), estilo lo-fi/ambiente */
+const MUSIC_CHORDS = [
+  [130.81, 164.81, 196.00, 246.94],  // C3 E3 G3 B3
+  [110.00, 130.81, 174.61, 220.00],  // A2 C3 F3 A3
+  [146.83, 174.61, 220.00, 261.63],  // D3 F3 A3 C4
+  [98.00, 123.47, 146.83, 196.00],   // G2 B2 D3 G3
+];
+let musicChordIndex = 0;
+
+function musicPlayChord(freqs, duration) {
+  const now = musicCtx.currentTime;
+  freqs.forEach((freq, idx) => {
+    const osc = musicCtx.createOscillator();
+    const noteGain = musicCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    /* leve dedetuning entre notas pra dar corpo, sem ficar estridente */
+    osc.detune.value = (idx % 2 === 0) ? -4 : 4;
+
+    const peak = 0.9 / freqs.length;
+    noteGain.gain.setValueAtTime(0, now);
+    noteGain.gain.linearRampToValueAtTime(peak, now + duration * 0.35);
+    noteGain.gain.linearRampToValueAtTime(0, now + duration);
+
+    osc.connect(noteGain);
+    noteGain.connect(musicGain);
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+  });
+}
+
+function musicScheduleLoop() {
+  const chordDuration = 4.2;
+  musicPlayChord(MUSIC_CHORDS[musicChordIndex], chordDuration);
+  musicChordIndex = (musicChordIndex + 1) % MUSIC_CHORDS.length;
+  musicTimeoutId = setTimeout(musicScheduleLoop, chordDuration * 1000);
+}
+
+function musicInit() {
+  if (musicStarted) return;
+  try {
+    musicCtx = new (window.AudioContext || window.webkitAudioContext)();
+    musicGain = musicCtx.createGain();
+    musicGain.gain.value = musicMuted ? 0 : 0.16;
+    musicGain.connect(musicCtx.destination);
+    musicStarted = true;
+    musicScheduleLoop();
+    updateMusicBtn();
+  } catch (e) { /* Web Audio indisponível — segue sem trilha sonora */ }
+}
+
+function toggleMusic() {
+  if (!musicStarted) { musicInit(); return; }
+  musicMuted = !musicMuted;
+  musicGain.gain.setTargetAtTime(musicMuted ? 0 : 0.16, musicCtx.currentTime, 0.15);
+  updateMusicBtn();
+}
+
+function updateMusicBtn() {
+  const btn = document.getElementById('musicToggleBtn');
+  if (btn) btn.textContent = musicMuted ? '🔇' : '🎵';
+}
+
+/* inicia a trilha assim que o usuário interage pela primeira vez com a página */
+['click', 'keydown', 'touchstart'].forEach(evt => {
+  document.addEventListener(evt, musicInit, { once: true });
+});
+</script>
+</body>
+</html>
